@@ -9,23 +9,37 @@ from __builtins__ import (
     move,
 )
 
+# ruff: noqa: E711
 
-def move_to(x, y):
+# Save us a tick per call, we assume the world size doesn't change mid-run.
+WORLD_SIZE = get_world_size()
+
+
+def move_to(x, y, current_x=None, current_y=None):
+    # In case we know where we are already, we can save 2 ticks.
+    if current_x == None:
+        current_x = get_pos_x()
+    if current_y == None:
+        current_y = get_pos_y()
     # The world is a torus, so normalize negatives to a positive number of moves
-    west_len = (get_pos_x() - x) % get_world_size()
-    if west_len < get_world_size() / 2:
+    west_len = (current_x - x) % WORLD_SIZE
+    if west_len < WORLD_SIZE / 2:
         ew_dir = West
+        ew_distance = west_len
     else:
         ew_dir = East
-    while get_pos_x() != x:
+        ew_distance = WORLD_SIZE - west_len
+    for _ in range(ew_distance):
         move(ew_dir)
 
-    north_len = (get_pos_y() - y) % get_world_size()
-    if north_len < get_world_size() / 2:
+    north_len = (current_y - y) % WORLD_SIZE
+    if north_len < WORLD_SIZE / 2:
         ns_dir = South
+        ns_distance = north_len
     else:
         ns_dir = North
-    while get_pos_y() != y:
+        ns_distance = WORLD_SIZE - north_len
+    for _ in range(ns_distance):
         move(ns_dir)
 
 
