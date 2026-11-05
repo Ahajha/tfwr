@@ -31,8 +31,6 @@ from __builtins__ import (
 )
 from utils import move_to, opposite
 
-# ruff: noqa: E711
-
 PUMPKIN_SQUARE = 8
 G = Entities.Grass
 C = Entities.Carrot

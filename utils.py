@@ -9,8 +9,6 @@ from __builtins__ import (
     move,
 )
 
-# ruff: noqa: E711
-
 # Save us a tick per call, we assume the world size doesn't change mid-run.
 WORLD_SIZE = get_world_size()
 
