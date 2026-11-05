@@ -1,0 +1,2 @@
+# Theoretically we could commit this, but it contains noise metadata like which windows are open and where.
+save.json

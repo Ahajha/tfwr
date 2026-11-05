@@ -1,0 +1,701 @@
+from __builtins__ import (
+    East,
+    Entities,
+    Items,
+    North,
+    South,
+    Unlocks,
+    West,
+    can_harvest,
+    can_move,
+    clear,
+    do_a_flip,
+    get_cost,
+    get_entity_type,
+    get_pos_x,
+    get_pos_y,
+    get_water,
+    get_world_size,
+    harvest,
+    max_drones,
+    measure,
+    move,
+    num_unlocked,
+    pet_the_piggy,
+    plant,
+    random,
+    spawn_drone,
+    swap,
+    till,
+    use_item,
+)
+
+# ruff: noqa: E711
+
+PUMPKIN_SQUARE = 8
+G = Entities.Grass
+C = Entities.Carrot
+T = Entities.Tree
+P = Entities.Pumpkin
+
+
+def copy_list(lst, n):
+    result = []
+    for _ in range(n):
+        result += lst
+    return result
+
+
+def needs_till(e):
+    return e == Entities.Carrot or e == Entities.Pumpkin
+
+
+# For laundering the return type, since it depends on the entity. Purely to make type checking happy.
+def measure_cactus(dir) -> int | None:
+    return measure(dir)  # type: ignore
+
+
+def measure_cactus_current() -> int:
+    return measure()  # type: ignore
+
+
+def validate(lay):
+    count = {
+        Entities.Carrot: 0,
+        Entities.Grass: 0,
+        Entities.Tree: 0,
+        Entities.Pumpkin: 0,
+    }
+    for row in lay:
+        for item in row:
+            count[item] += 1
+    net = {
+        Items.Carrot: count[Entities.Carrot] * 128,
+        Items.Hay: count[Entities.Grass] * 256,
+        Items.Wood: count[Entities.Tree] * 12800,
+        Items.Pumpkin: count[Entities.Pumpkin] * 6 * 16,
+    }
+    for item in count:
+        cost = get_cost(item)
+        # assert cost
+        for thing in cost:  # type: ignore
+            net[thing] -= count[item] * cost[thing]  # type: ignore
+    print(net)
+
+
+def setup():
+    clear()
+    do_a_flip()
+    pet_the_piggy()
+
+
+LAYOUT = copy_list(
+    [copy_list([G, T], get_world_size() / 2), copy_list([T, G], get_world_size() / 2)],
+    (get_world_size() - PUMPKIN_SQUARE) / 2,
+) + copy_list(
+    [
+        copy_list([P], PUMPKIN_SQUARE)
+        + copy_list([C], get_world_size() - PUMPKIN_SQUARE)
+    ],
+    PUMPKIN_SQUARE,
+)
+
+
+def run_farm():
+    bootstrap = True
+    validate(LAYOUT)
+
+    last_dead_pumpkin = (0, 0)
+
+    while True:
+        for j in range(get_world_size()):
+            for i in range(get_world_size()):
+                crop = LAYOUT[i][j]
+                if crop == P:
+                    if bootstrap:
+                        till()
+                    if get_entity_type() == Entities.Dead_Pumpkin:
+                        last_dead_pumpkin = (get_pos_x(), get_pos_y())
+                        harvest()
+                    elif (get_pos_x(), get_pos_y()) == last_dead_pumpkin:
+                        harvest()
+                elif can_harvest():
+                    harvest()
+                    if bootstrap and needs_till(crop):
+                        till()
+                plant(crop)
+                move(North)
+                if i == get_world_size() - 1:
+                    move(East)
+        bootstrap = False
+
+
+def multithread_farm(id=0):
+    width = 1  # get_world_size() / max_drones()
+    for _ in range(width):
+        move(North)
+    spawn_drone(multithread_farm, id + 1)
+    while True:
+        for i in range(width):
+            for _ in range(get_world_size()):
+                if can_harvest():
+                    harvest()
+                elif get_water() < 0.5:
+                    use_item(Items.Water)
+                if (get_pos_x() + get_pos_y()) % 2 != 0:
+                    plant(Entities.Tree)
+                move(East)
+            if i == width - 1:
+                for _ in range(width - 1):
+                    move(South)
+            else:
+                move(North)
+
+
+def move_to(x, y):
+    # The world is a torus, so normalize negatives to a positive number of moves
+    west_len = (get_pos_x() - x) % get_world_size()
+    if west_len < get_world_size() / 2:
+        ew_dir = West
+    else:
+        ew_dir = East
+    while get_pos_x() != x:
+        move(ew_dir)
+
+    north_len = (get_pos_y() - y) % get_world_size()
+    if north_len < get_world_size() / 2:
+        ns_dir = South
+    else:
+        ns_dir = North
+    while get_pos_y() != y:
+        move(ns_dir)
+
+
+def pumpkin_thread_action(analyze_mode, redo_spots):
+    if analyze_mode:
+        while True:
+            if can_harvest():
+                break
+            if get_entity_type() == Entities.Dead_Pumpkin:
+                plant(Entities.Pumpkin)
+                redo_spots.append((get_pos_x(), get_pos_y()))
+                break
+    else:
+        if get_entity_type() != Entities.Pumpkin:
+            if not plant(Entities.Pumpkin):
+                till()
+                plant(Entities.Pumpkin)
+
+
+def pumpkin_thread(start_x, start_y, size):
+    if size % 2 != 0:
+        print("must be even")
+        do_a_flip()
+        return
+    while True:
+        move_to(start_x, start_y)
+        harvest()
+
+        analyze_mode = False
+        redo_spots = []
+
+        for _ in range(2):
+            for i in range(size):
+                for _ in range(size - 2):
+                    pumpkin_thread_action(analyze_mode, redo_spots)
+                    if i % 2 == 0:
+                        move(East)
+                    else:
+                        move(West)
+                pumpkin_thread_action(analyze_mode, redo_spots)
+                if i == 0:
+                    move(East)
+                    pumpkin_thread_action(analyze_mode, redo_spots)
+                if i < size - 1:
+                    move(North)
+                else:
+                    move(West)
+                    while get_pos_y() != start_y:
+                        pumpkin_thread_action(analyze_mode, redo_spots)
+                        move(South)
+            analyze_mode = True
+
+        while len(redo_spots) > 0:
+            # Weird concurrent modification stuff, just reconstruct the list each time
+            new_redo_spots = []
+            for spot in redo_spots:
+                move_to(spot[0], spot[1])
+                # Since we look at things in the same order each time, it doesn't really make sense
+                # to skip over something that isn't ready.
+                while not can_harvest() and get_entity_type() != Entities.Dead_Pumpkin:
+                    if get_water() < 0.5:
+                        use_item(Items.Water)
+                if get_entity_type() == Entities.Dead_Pumpkin:
+                    plant(Entities.Pumpkin)
+                    new_redo_spots.append(spot)
+            redo_spots = new_redo_spots
+
+
+def cacti_thread_action(analyze_mode, layout, start_x, start_y, sort_spots):
+    if analyze_mode:
+        while not can_harvest():
+            continue
+
+        layout[get_pos_x() - start_x][get_pos_y() - start_y] = measure_cactus_current()
+        sort_spots.append((get_pos_x(), get_pos_y()))
+    else:
+        if get_entity_type() != Entities.Cactus:
+            if not plant(Entities.Cactus):
+                till()
+                plant(Entities.Cactus)
+
+
+def cacti_thread(start_x, start_y, size):
+    if size % 2 != 0:
+        print("must be even")
+        do_a_flip()
+        return
+    while True:
+        move_to(start_x, start_y)
+        harvest()
+
+        analyze_mode = False
+        layout = [
+            # HACK
+            copy_list([-1], size),
+            copy_list([-1], size),
+            copy_list([-1], size),
+            copy_list([-1], size),
+            copy_list([-1], size),
+            copy_list([-1], size),
+            copy_list([-1], size),
+            copy_list([-1], size),
+        ]
+        sort_spots = []
+
+        for _ in range(2):
+            for i in range(size):
+                for _ in range(size - 2):
+                    cacti_thread_action(
+                        analyze_mode,
+                        layout,
+                        start_x,
+                        start_y,
+                        sort_spots,
+                    )
+                    if i % 2 == 0:
+                        move(East)
+                    else:
+                        move(West)
+                cacti_thread_action(
+                    analyze_mode,
+                    layout,
+                    start_x,
+                    start_y,
+                    sort_spots,
+                )
+                if i == 0:
+                    move(East)
+                    cacti_thread_action(
+                        analyze_mode,
+                        layout,
+                        start_x,
+                        start_y,
+                        sort_spots,
+                    )
+                if i < size - 1:
+                    move(North)
+                else:
+                    move(West)
+                    while get_pos_y() != start_y:
+                        cacti_thread_action(
+                            analyze_mode,
+                            layout,
+                            start_x,
+                            start_y,
+                            sort_spots,
+                        )
+                        move(South)
+            analyze_mode = True
+
+        while len(sort_spots) > 0:
+            # Weird concurrent modification stuff, just reconstruct the list each time
+            new_sort_spots = []
+            for spot in sort_spots:
+                x = spot[0] - start_x
+                y = spot[1] - start_y
+
+                swap_dir = None
+
+                current_size = layout[x][y]
+                if x + 1 < size:
+                    east_size = layout[x + 1][y]
+                else:
+                    east_size = None
+                if y + 1 < size:
+                    north_size = layout[x][y + 1]
+                else:
+                    north_size = None
+                if east_size != None and current_size > east_size:
+                    if north_size != None and east_size > north_size:
+                        # N E C swap N
+                        swap_dir = North
+                    else:
+                        # E C N swap E
+                        # E N C swap E
+                        swap_dir = East
+                elif north_size != None and current_size > north_size:
+                    # N C E swap N
+                    swap_dir = North
+                # Else:
+                # C N E noop
+                # C E N noop
+
+                if swap_dir == None:
+                    continue
+
+                move_to(spot[0], spot[1])
+                swap(swap_dir)
+                # TODO: 2 schools of thought: do we just do N/E, or do we also cover S/W at the same time?
+                if x > 0:
+                    new_sort_spots.append((spot[0] - 1, spot[1]))
+                if y > 0:
+                    new_sort_spots.append((spot[0], spot[1] - 1))
+                if swap_dir == North:
+                    new_sort_spots.append((spot[0], spot[1] + 1))
+                    tmp = layout[x][y + 1]
+                    layout[x][y + 1] = layout[x][y]
+                    layout[x][y] = tmp
+                else:
+                    new_sort_spots.append((spot[0] + 1, spot[1]))
+                    tmp = layout[x + 1][y]
+                    layout[x + 1][y] = layout[x][y]
+                    layout[x][y] = tmp
+            sort_spots = new_sort_spots
+
+
+def carrot_thread(start_x, start_y, vertical):
+    move_to(start_x, start_y)
+    bootstrap = True
+    if vertical:
+        direction = North
+    else:
+        direction = East
+    while True:
+        if bootstrap:
+            till()
+        else:
+            if can_harvest():
+                harvest()
+            elif get_water() < 0.5:
+                use_item(Items.Water)
+        plant(Entities.Carrot)
+        move(direction)
+        if get_pos_x() == start_x and get_pos_y() == start_y:
+            bootstrap = False
+
+
+def pumpkin_dispatch():
+    pumpkin_starts = [
+        (16, 0),
+        (8, 8),
+        (24, 8),
+        (0, 16),
+        (16, 16),
+        (8, 24),
+        (24, 24),
+    ]
+    cacti_starts = [
+        (8, 0),
+        (24, 0),
+        (0, 8),
+        (16, 8),
+        (8, 16),
+        (24, 16),
+        (0, 24),
+        (16, 24),
+    ]
+    size = 8
+
+    carrot_starts = [
+        (6, 0, True),
+        (7, 0, True),
+        (14, 0, True),
+        (15, 0, True),
+        (22, 0, True),
+        (23, 0, True),
+        (30, 0, True),
+        (31, 0, True),
+        (0, 6, False),
+        (0, 7, False),
+        (0, 14, False),
+        (0, 15, False),
+        (0, 22, False),
+        (0, 23, False),
+        (0, 30, False),
+        (0, 31, False),
+    ]
+
+    for start in pumpkin_starts:
+        spawn_drone(pumpkin_thread, start[0], start[1], size)  # type: ignore
+    for start in cacti_starts:
+        spawn_drone(cacti_thread, start[0], start[1], size)  # type: ignore
+    # for start in carrot_starts:
+    #    spawn_drone(carrot_thread, start[0], start[1], start[2])  # type: ignore
+    pumpkin_thread(0, 0, size)
+
+
+def get_fertilizer():
+    while True:
+        for j in range(get_world_size()):
+            for i in range(get_world_size()):
+                if i % 2 == j % 2:
+                    if can_harvest():
+                        harvest()
+                    plant(Entities.Tree)
+                    use_item(Items.Fertilizer)
+                move(North)
+                if i == get_world_size() - 1:
+                    move(East)
+
+
+def maze():
+    plant(Entities.Bush)
+    substance = get_world_size() * 2 ** (num_unlocked(Unlocks.Mazes) - 1)
+    use_item(Items.Weird_Substance, substance)
+
+
+def opposite(dir):
+    if dir == North:
+        return South
+    if dir == South:
+        return North
+    if dir == East:
+        return West
+    return East
+
+
+_DIRS = [
+    [North, South, East, West],
+    [South, East, West, North],
+    [East, West, North, South],
+    [West, North, South, East],
+]
+
+
+def solve_maze():
+    stack = [[]]
+
+    while get_entity_type() != Entities.Treasure:
+        if len(stack[-1]) < 4:
+            for dir in [North, South, East, West]:
+                if dir in stack[-1]:
+                    continue
+                stack[-1].append(dir)
+                if move(dir):
+                    stack.append([opposite(dir)])
+                    break
+        else:
+            move(stack[-1][0])
+            stack.pop()
+
+    harvest()
+
+
+def get_candidates(exclude=None):
+    # Randomized so that if a bunch of drones take the same path, they're more likely to split up
+    result_candidates = [North, South, East, West]
+    result = []
+    for _ in range(4):
+        index = (random() * len(result_candidates)) // 1
+        dir = result_candidates[index]  # type: ignore
+
+        if can_move(dir) and dir != exclude:
+            result.append(dir)
+        result_candidates.remove(dir)
+    return result
+
+
+# Each item in the outer list is is a cell
+# Each item in the inner list is a tuple of (candidates, direction to return or none)
+# stack: list[tuple[list[Direction], Optional[Direction]]]
+def solve_maze_multithreaded(stack=[]):
+    # There is an odd phenomena where drones sometimes cover the same path many times.
+    # However, I think this is a consequence of drones not really getting killed
+    # when treasure is found.
+
+    if stack == []:
+        stack = [(get_candidates(), None)]
+
+    while True:
+        while get_entity_type() != Entities.Treasure:
+            while len(stack[-1][0]) > 0 and get_entity_type() != Entities.Treasure:
+                # Always use the last element so we can just pop and move on
+                dir = stack[-1][0][-1]
+                # If this is the last element, we always want to do this ourselves
+                if len(stack[-1][0]) > 1 and spawn_drone(
+                    solve_maze_multithreaded, [([dir], None)]
+                ):
+                    # Fire and forget
+                    stack[-1][0].pop()
+                else:
+                    # Do it ourselves
+                    if not move(dir):
+                        # Invalidated, fail-fast
+                        return
+                    stack[-1][0].pop()
+                    opp = opposite(dir)
+                    # Add back when the main bug is fixed
+                    if len(stack[-1][0]) == 0 and stack[-1][1] == None:
+                        # No more things to check here, no need to backtrack
+                        stack.pop()
+                        stack.append((get_candidates(opp), None))
+                    else:
+                        stack.append((get_candidates(opp), opp))
+
+            if get_entity_type() == Entities.Treasure:
+                break
+
+            if stack[-1][1] == None:
+                # Explicit end of the stack
+                return
+            if not move(stack[-1][1]):
+                # Invalidated, fail-fast
+                return
+            stack.pop()
+
+        harvest()
+        maze()
+        stack = [(get_candidates(), None)]
+
+
+DUMB_MAZE_SIZE = 4
+
+
+def dumb_mazes(init=True, x=0, y=0):
+    if init:
+        clear()
+        for i in range(DUMB_MAZE_SIZE):
+            for j in range(DUMB_MAZE_SIZE):
+                if i == 0 and j == 0:
+                    # This thread
+                    continue
+                spawn_drone(dumb_mazes, False, i, j)
+
+    move_to(x, y)
+
+    while True:
+        if init:
+            plant(Entities.Bush)
+            substance = DUMB_MAZE_SIZE * 2 ** (num_unlocked(Unlocks.Mazes) - 1)
+            use_item(Items.Weird_Substance, substance)
+        if get_entity_type() == Entities.Treasure:
+            harvest()
+
+
+def fast_hay(init=True, y=0):
+    if init:
+        clear()
+        for i in range(max_drones() - 1):
+            spawn_drone(fast_hay, False, i + 1)
+
+    move_to(0, y)
+
+    while True:
+        move(East)
+        harvest()
+
+
+def cacti(size):
+    bootstrap = True
+    while True:
+        # Plant
+        move_to(0, 0)
+        for j in range(size):
+            for i in range(size):
+                # crop = LAYOUT[i][j]
+                # if crop == P:
+                if bootstrap:
+                    till()
+                # if get_entity_type() == Entities.Dead_Pumpkin:
+                # last_dead_pumpkin = (get_pos_x(), get_pos_y())
+                # harvest()
+                # elif (get_pos_x(), get_pos_y()) == last_dead_pumpkin:
+                # harvest()
+                # elif can_harvest():
+                # harvest()
+                # if bootstrap and needs_till(crop):
+                # till()
+                # plant(crop)
+                plant(Entities.Cactus)
+                if i == size - 1:
+                    if j == size - 1:
+                        continue
+                    move(East)
+                elif j % 2 == 0:
+                    move(North)
+                else:
+                    move(South)
+        bootstrap = False
+        # Sort
+        move_to(0, 0)
+        while True:
+            sorted = True
+            for j in range(size):
+                for i in range(size):
+                    # Note: assumes anything outside of this is not measurable. Probably needs fixing.
+                    current_size = measure_cactus_current()
+                    north_size = measure_cactus(North)
+                    east_size = measure_cactus(East)
+                    if east_size != None and current_size > east_size:
+                        if north_size != None and east_size > north_size:
+                            # N E C swap N
+                            swap(North)
+                            sorted = False
+                        else:
+                            # E C N swap E
+                            # E N C swap E
+                            swap(East)
+                            sorted = False
+                    elif north_size != None and current_size > north_size:
+                        # N C E swap N
+                        swap(North)
+                        sorted = False
+                    # Else:
+                    # C N E noop
+                    # C E N noop
+
+                    if i == size - 1:
+                        if j == size - 1:
+                            continue
+                        move(East)
+                    elif j % 2 == 0:
+                        move(North)
+                    else:
+                        move(South)
+            move_to(0, 0)
+            if sorted:
+                break
+        harvest()
+
+
+def mazes():
+    maze()
+    solve_maze_multithreaded()
+
+
+def farm():
+    setup()
+    run_farm()
+
+
+# harvest()
+#
+
+clear()
+# mazes()
+pumpkin_dispatch()
+# cacti_thread(1, 1, 6)
+# dumb_mazes()
+# multithread_farm()
+# cacti(21)
