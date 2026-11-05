@@ -8,7 +8,6 @@ from __builtins__ import (
     can_harvest,
     clear,
     do_a_flip,
-    get_cost,
     get_entity_type,
     get_pos_x,
     get_pos_y,
@@ -18,7 +17,6 @@ from __builtins__ import (
     max_drones,
     measure,
     move,
-    pet_the_piggy,
     plant,
     spawn_drone,
     swap,
@@ -28,22 +26,12 @@ from __builtins__ import (
 from maze import maze, solve_maze_multithreaded
 from utils import move_to
 
-PUMPKIN_SQUARE = 8
-G = Entities.Grass
-C = Entities.Carrot
-T = Entities.Tree
-P = Entities.Pumpkin
-
 
 def copy_list(lst, n):
     result = []
     for _ in range(n):
         result += lst
     return result
-
-
-def needs_till(e):
-    return e == Entities.Carrot or e == Entities.Pumpkin
 
 
 # For laundering the return type, since it depends on the entity. Purely to make type checking happy.
@@ -53,77 +41,6 @@ def measure_cactus(dir) -> int | None:
 
 def measure_cactus_current() -> int:
     return measure()  # type: ignore
-
-
-def validate(lay):
-    count = {
-        Entities.Carrot: 0,
-        Entities.Grass: 0,
-        Entities.Tree: 0,
-        Entities.Pumpkin: 0,
-    }
-    for row in lay:
-        for item in row:
-            count[item] += 1
-    net = {
-        Items.Carrot: count[Entities.Carrot] * 128,
-        Items.Hay: count[Entities.Grass] * 256,
-        Items.Wood: count[Entities.Tree] * 12800,
-        Items.Pumpkin: count[Entities.Pumpkin] * 6 * 16,
-    }
-    for item in count:
-        cost = get_cost(item)
-        # assert cost
-        for thing in cost:  # type: ignore
-            net[thing] -= count[item] * cost[thing]  # type: ignore
-    print(net)
-
-
-def setup():
-    clear()
-    do_a_flip()
-    pet_the_piggy()
-
-
-LAYOUT = copy_list(
-    [copy_list([G, T], get_world_size() / 2), copy_list([T, G], get_world_size() / 2)],
-    (get_world_size() - PUMPKIN_SQUARE) / 2,
-) + copy_list(
-    [
-        copy_list([P], PUMPKIN_SQUARE)
-        + copy_list([C], get_world_size() - PUMPKIN_SQUARE)
-    ],
-    PUMPKIN_SQUARE,
-)
-
-
-def run_farm():
-    bootstrap = True
-    validate(LAYOUT)
-
-    last_dead_pumpkin = (0, 0)
-
-    while True:
-        for j in range(get_world_size()):
-            for i in range(get_world_size()):
-                crop = LAYOUT[i][j]
-                if crop == P:
-                    if bootstrap:
-                        till()
-                    if get_entity_type() == Entities.Dead_Pumpkin:
-                        last_dead_pumpkin = (get_pos_x(), get_pos_y())
-                        harvest()
-                    elif (get_pos_x(), get_pos_y()) == last_dead_pumpkin:
-                        harvest()
-                elif can_harvest():
-                    harvest()
-                    if bootstrap and needs_till(crop):
-                        till()
-                plant(crop)
-                move(North)
-                if i == get_world_size() - 1:
-                    move(East)
-        bootstrap = False
 
 
 def multithread_farm(id=0):
@@ -392,7 +309,7 @@ def pumpkin_dispatch():
         (0, 24),
         (16, 24),
     ]
-    size = 8
+    size = 6
 
     carrot_starts = [
         (6, 0, True),
@@ -417,8 +334,8 @@ def pumpkin_dispatch():
         spawn_drone(pumpkin_thread, start[0], start[1], size)  # type: ignore
     for start in cacti_starts:
         spawn_drone(cacti_thread, start[0], start[1], size)  # type: ignore
-    # for start in carrot_starts:
-    #    spawn_drone(carrot_thread, start[0], start[1], start[2])  # type: ignore
+    for start in carrot_starts:
+        spawn_drone(carrot_thread, start[0], start[1], start[2])  # type: ignore
     pumpkin_thread(0, 0, size)
 
 
@@ -456,20 +373,8 @@ def cacti(size):
         move_to(0, 0)
         for j in range(size):
             for i in range(size):
-                # crop = LAYOUT[i][j]
-                # if crop == P:
                 if bootstrap:
                     till()
-                # if get_entity_type() == Entities.Dead_Pumpkin:
-                # last_dead_pumpkin = (get_pos_x(), get_pos_y())
-                # harvest()
-                # elif (get_pos_x(), get_pos_y()) == last_dead_pumpkin:
-                # harvest()
-                # elif can_harvest():
-                # harvest()
-                # if bootstrap and needs_till(crop):
-                # till()
-                # plant(crop)
                 plant(Entities.Cactus)
                 if i == size - 1:
                     if j == size - 1:
@@ -527,18 +432,7 @@ def mazes():
     solve_maze_multithreaded()
 
 
-def farm():
-    setup()
-    run_farm()
-
-
-# harvest()
-#
-
 clear()
-# mazes()
 pumpkin_dispatch()
-# cacti_thread(1, 1, 6)
-# dumb_mazes()
+# mazes()
 # multithread_farm()
-# cacti(21)
