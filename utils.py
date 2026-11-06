@@ -65,20 +65,23 @@ def visit_square(size, action):
     # Assumes starting in the lower-left corner, and returns there.
     action()
     move(East)
+    size_1 = size - 1
     size_2 = size - 2
+    is_east = True
     for i in range(size):
-        if i % 2 == 0:
-            for _ in range(size_2):
-                action()
-                move(East)
+        if is_east:
+            dir = East
         else:
-            for _ in range(size_2):
-                action()
-                move(West)
+            dir = West
+
+        for _ in range(size_2):
+            action()
+            move(dir)
         action()
-        if i < size - 1:
+        if i < size_1:
             move(North)
+        is_east = not is_east
     move(West)
-    for _ in range(size - 1):
+    for _ in range(size_1):
         action()
         move(South)
