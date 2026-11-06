@@ -27,13 +27,6 @@ from maze import maze, solve_maze_multithreaded
 from utils import move_to
 
 
-def copy_list(lst, n):
-    result = []
-    for _ in range(n):
-        result += lst
-    return result
-
-
 # For laundering the return type, since it depends on the entity. Purely to make type checking happy.
 def measure_cactus(dir) -> int | None:
     return measure(dir)  # type: ignore
@@ -154,17 +147,12 @@ def cacti_thread(start_x, start_y, size):
         harvest()
 
         analyze_mode = False
-        layout = [
-            # HACK
-            copy_list([-1], size),
-            copy_list([-1], size),
-            copy_list([-1], size),
-            copy_list([-1], size),
-            copy_list([-1], size),
-            copy_list([-1], size),
-            copy_list([-1], size),
-            copy_list([-1], size),
-        ]
+        layout = []
+        for _ in range(size):
+            row = []
+            for _ in range(size):
+                row.append(-1)
+            layout.append(row)
         sort_spots = []
 
         for _ in range(2):
