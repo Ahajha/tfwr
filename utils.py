@@ -49,3 +49,35 @@ def opposite(dir):
     if dir == East:
         return West
     return East
+
+
+def visit_square(size, action):
+    # Visits every spot in a square and applies an action.
+    # Goes in this order (6x6 for example):
+    #
+    # v<<<<<
+    # v>>>>^
+    # v^<<<<
+    # v>>>>^
+    # v^<<<<
+    # >>>>>^
+    #
+    # Assumes starting in the lower-left corner, and returns there.
+    for i in range(size):
+        for _ in range(size - 2):
+            action()
+            if i % 2 == 0:
+                move(East)
+            else:
+                move(West)
+        action()
+        if i == 0:
+            move(East)
+            action()
+        if i < size - 1:
+            move(North)
+        else:
+            move(West)
+            for _ in range(size - 1):
+                action()
+                move(South)
