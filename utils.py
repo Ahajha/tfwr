@@ -66,7 +66,7 @@ def visit_square(size, action):
     action()
     move(East)
     for i in range(size):
-        for _ in range(size - 1):
+        for _ in range(size - 2):
             action()
             if i % 2 == 0:
                 move(East)
