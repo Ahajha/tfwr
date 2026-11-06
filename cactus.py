@@ -3,7 +3,6 @@ from __builtins__ import (
     Entities,
     North,
     South,
-    West,
     can_harvest,
     do_a_flip,
     get_entity_type,
@@ -16,7 +15,7 @@ from __builtins__ import (
     swap,
     till,
 )
-from utils import move_to
+from utils import move_to, visit_square
 
 
 # For laundering the return type, since it depends on the entity. Purely to make type checking happy.
@@ -28,20 +27,6 @@ def measure_cactus_current() -> int:
     return measure()  # type: ignore
 
 
-def cacti_thread_action(analyze_mode, layout, start_x, start_y, sort_spots):
-    if analyze_mode:
-        while not can_harvest():
-            continue
-
-        layout[get_pos_x() - start_x][get_pos_y() - start_y] = measure_cactus_current()
-        sort_spots.append((get_pos_x(), get_pos_y()))
-    else:
-        if get_entity_type() != Entities.Cactus:
-            if not plant(Entities.Cactus):
-                till()
-                plant(Entities.Cactus)
-
-
 def cacti_thread(start_x, start_y, size):
     if size % 2 != 0:
         print("must be even")
@@ -51,7 +36,6 @@ def cacti_thread(start_x, start_y, size):
         move_to(start_x, start_y)
         harvest()
 
-        analyze_mode = False
         layout = []
         for _ in range(size):
             row = []
@@ -60,50 +44,24 @@ def cacti_thread(start_x, start_y, size):
             layout.append(row)
         sort_spots = []
 
-        for _ in range(2):
-            for i in range(size):
-                for _ in range(size - 2):
-                    cacti_thread_action(
-                        analyze_mode,
-                        layout,
-                        start_x,
-                        start_y,
-                        sort_spots,
-                    )
-                    if i % 2 == 0:
-                        move(East)
-                    else:
-                        move(West)
-                cacti_thread_action(
-                    analyze_mode,
-                    layout,
-                    start_x,
-                    start_y,
-                    sort_spots,
-                )
-                if i == 0:
-                    move(East)
-                    cacti_thread_action(
-                        analyze_mode,
-                        layout,
-                        start_x,
-                        start_y,
-                        sort_spots,
-                    )
-                if i < size - 1:
-                    move(North)
-                else:
-                    move(West)
-                    while get_pos_y() != start_y:
-                        cacti_thread_action(
-                            analyze_mode,
-                            layout,
-                            start_x,
-                            start_y,
-                            sort_spots,
-                        )
-                        move(South)
-            analyze_mode = True
+        def plant_cactus():
+            if get_entity_type() != Entities.Cactus:
+                if not plant(Entities.Cactus):
+                    till()
+                    plant(Entities.Cactus)
+
+        visit_square(size, plant_cactus)
+
+        def analyze():
+            while not can_harvest():
+                continue
+
+            layout[get_pos_x() - start_x][get_pos_y() - start_y] = (
+                measure_cactus_current()
+            )
+            sort_spots.append((get_pos_x(), get_pos_y()))
+
+        visit_square(size, analyze)
 
         while len(sort_spots) > 0:
             # Weird concurrent modification stuff, just reconstruct the list each time
