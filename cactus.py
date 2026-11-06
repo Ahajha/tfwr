@@ -3,6 +3,7 @@ from __builtins__ import (
     Entities,
     North,
     South,
+    West,
     can_harvest,
     do_a_flip,
     get_entity_type,
@@ -49,19 +50,47 @@ def cacti_thread(start_x, start_y, size):
                 if not plant(Entities.Cactus):
                     till()
                     plant(Entities.Cactus)
+            sort_spots.append((get_pos_x(), get_pos_y()))
 
         visit_square(size, plant_cactus)
 
-        def analyze():
-            while not can_harvest():
-                continue
+        if size == 6:
 
-            layout[get_pos_x() - start_x][get_pos_y() - start_y] = (
-                measure_cactus_current()
-            )
-            sort_spots.append((get_pos_x(), get_pos_y()))
+            def measure():
+                x = get_pos_x() - start_x
+                y = get_pos_y() - start_y
 
-        visit_square(size, analyze)
+                layout[x + 1][y] = measure_cactus(East)
+                layout[x][y] = measure_cactus_current()
+                layout[x - 1][y] = measure_cactus(West)
+
+            move(East)
+            measure()
+            move(East)
+            move(East)
+            move(East)
+
+            for _ in range(5):
+                measure()
+                move(North)
+            measure()
+            for _ in range(3):
+                move(West)
+            for _ in range(4):
+                measure()
+                move(South)
+            measure()
+        else:
+
+            def analyze():
+                while not can_harvest():
+                    continue
+
+                layout[get_pos_x() - start_x][get_pos_y() - start_y] = (
+                    measure_cactus_current()
+                )
+
+            visit_square(size, analyze)
 
         while len(sort_spots) > 0:
             # Weird concurrent modification stuff, just reconstruct the list each time
