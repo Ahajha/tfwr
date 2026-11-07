@@ -223,7 +223,11 @@ def cacti_thread(start_x, start_y, size):
         while len(sort_spots) > 0:
             # Weird concurrent modification stuff, just reconstruct the list each time
             new_sort_spots = []
+            visited = set()
             for spot in sort_spots:
+                if spot in visited:
+                    continue
+                visited.add(spot)
                 x = spot[0] - start_x
                 y = spot[1] - start_y
 
