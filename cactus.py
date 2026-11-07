@@ -317,3 +317,8 @@ def mega_cactus(size=WORLD_SIZE):
         quick_print("duration: ", (end - start))
 
         bootstrap = False
+
+
+if __name__ == "__main__":
+    clear()
+    mega_cactus()
