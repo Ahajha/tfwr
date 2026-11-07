@@ -10,10 +10,12 @@ from __builtins__ import (
     get_entity_type,
     get_pos_x,
     get_pos_y,
+    get_time,
     harvest,
     measure,
     move,
     plant,
+    quick_print,
     spawn_drone,
     swap,
     till,
@@ -252,23 +254,29 @@ def cocktail_shaker(dir: Direction, x, y, size):
     # For now, we just sort the one in front of us. We can optimize a bit later.
     # If there are N spaces, we need to do ~N passes (again, optimize later)
     for i in range(size):
+        did_swap = False
         for j in range(size - i - 1):
             if i % 2 == 0:
                 if measure_cactus() > measure_cactus(dir):
                     swap(dir)
+                    did_swap = True
                 if j != size - i - 2:
                     move(dir)
             else:
                 if measure_cactus() < measure_cactus(opp):
                     swap(opp)
+                    did_swap = True
                 if j != size - i - 2:
                     move(opp)
+        if not did_swap:
+            break
 
 
-def mega_plant(x, y, size):
+def mega_plant(x, y, size, bootstrap):
     move_to(x, y)
     for _ in range(size):
-        till()
+        if bootstrap:
+            till()
         plant(Entities.Cactus)
         move(North)
 
@@ -280,20 +288,30 @@ def mega_plant(x, y, size):
 def mega_cactus(size=WORLD_SIZE):
     # 32 x 32 cactus!
 
-    drones = []
-    for i in range(size - 1):
-        drones.append(spawn_drone(mega_plant, i + 1, 0, size))  # type: ignore
-    mega_plant(0, 0, size)
+    bootstrap = True
+    while True:
+        start = get_time()
 
-    for drone in drones:
-        wait_for(drone)
+        drones = []
+        for i in range(size - 1):
+            drones.append(spawn_drone(mega_plant, i + 1, 0, size, bootstrap))  # type: ignore
+        mega_plant(0, 0, size, bootstrap)
 
-    for i in range(size - 1):
-        drones.append(spawn_drone(cocktail_shaker, East, 0, i + 1, size))  # type: ignore
+        for drone in drones:
+            wait_for(drone)
 
-    cocktail_shaker(East, 0, 0, size)
+        for i in range(size - 1):
+            drones.append(spawn_drone(cocktail_shaker, East, 0, i + 1, size))  # type: ignore
 
-    for drone in drones:
-        wait_for(drone)
+        cocktail_shaker(East, 0, 0, size)
 
-    harvest()
+        for drone in drones:
+            wait_for(drone)
+
+        harvest()
+
+        end = get_time()
+
+        quick_print("duration: ", (end - start))
+
+        bootstrap = False
