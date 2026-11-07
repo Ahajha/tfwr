@@ -129,7 +129,37 @@ def mazes():
     solve_maze_multithreaded()
 
 
+def multifarm(x, y):
+    move_to(x, y)
+    crops = [Entities.Bush, Entities.Tree, Entities.Carrot, None]
+
+    bootstrap = True
+
+    offset = x % 4
+    size = get_world_size()
+    while True:
+        for i in range(size):
+            if can_harvest():
+                harvest()
+            elif get_water() < 0.5:
+                use_item(Items.Water)
+            crop = crops[(i + offset) % 4]
+            if crop:
+                if crop == Entities.Carrot and bootstrap:
+                    till()
+                plant(crop)
+            move(North)
+        bootstrap = False
+
+
+def multifarm_dispatch():
+    for i in range(get_world_size() - 1):
+        spawn_drone(multifarm, i + 1, 0)  # type: ignore
+    multifarm(0, 0)
+
+
 clear()
-pumpkin_dispatch()
+multifarm_dispatch()
+# pumpkin_dispatch()
 # mazes()
 # multithread_farm()
