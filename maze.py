@@ -1,23 +1,3 @@
-from __builtins__ import (
-    East,
-    Entities,
-    Items,
-    North,
-    South,
-    Unlocks,
-    West,
-    can_move,
-    clear,
-    get_entity_type,
-    get_world_size,
-    harvest,
-    move,
-    num_unlocked,
-    plant,
-    random,
-    spawn_drone,
-    use_item,
-)
 from utils import move_to, opposite
 
 

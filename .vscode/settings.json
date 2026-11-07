@@ -1,0 +1,4 @@
+{
+    // Greatly reduces the number of suggested imports
+    "ty.completions.autoImport": false
+}

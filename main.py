@@ -1,23 +1,3 @@
-from __builtins__ import (
-    East,
-    Entities,
-    Items,
-    North,
-    South,
-    can_harvest,
-    clear,
-    get_pos_x,
-    get_pos_y,
-    get_water,
-    get_world_size,
-    harvest,
-    max_drones,
-    move,
-    plant,
-    spawn_drone,
-    till,
-    use_item,
-)
 from cactus import cacti_thread
 from maze import maze, solve_maze_multithreaded
 from pumpkin import pumpkin_thread

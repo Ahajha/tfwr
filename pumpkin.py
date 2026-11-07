@@ -1,17 +1,3 @@
-from __builtins__ import (
-    Entities,
-    Items,
-    can_harvest,
-    do_a_flip,
-    get_entity_type,
-    get_pos_x,
-    get_pos_y,
-    get_water,
-    harvest,
-    plant,
-    till,
-    use_item,
-)
 from utils import move_to, visit_square
 
 

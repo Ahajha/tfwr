@@ -1,26 +1,3 @@
-from __builtins__ import (
-    Direction,
-    East,
-    Entities,
-    North,
-    South,
-    West,
-    can_harvest,
-    do_a_flip,
-    get_entity_type,
-    get_pos_x,
-    get_pos_y,
-    get_time,
-    harvest,
-    measure,
-    move,
-    plant,
-    quick_print,
-    spawn_drone,
-    swap,
-    till,
-    wait_for,
-)
 from utils import WORLD_SIZE, move_to, opposite, visit_square
 
 
