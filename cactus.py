@@ -20,12 +20,8 @@ from utils import move_to, visit_square
 
 
 # For laundering the return type, since it depends on the entity. Purely to make type checking happy.
-def measure_cactus(dir) -> int | None:
+def measure_cactus(dir=None) -> int:
     return measure(dir)  # type: ignore
-
-
-def measure_cactus_current() -> int:
-    return measure()  # type: ignore
 
 
 # to figure out if a spot needs sorting:
@@ -189,7 +185,7 @@ def cacti_thread(start_x, start_y, size):
                 y = get_pos_y() - start_y
 
                 layout[x + 1][y] = measure_cactus(East)
-                layout[x][y] = measure_cactus_current()
+                layout[x][y] = measure_cactus()
                 layout[x - 1][y] = measure_cactus(West)
 
             move(East)
@@ -214,9 +210,7 @@ def cacti_thread(start_x, start_y, size):
                 while not can_harvest():
                     continue
 
-                layout[get_pos_x() - start_x][get_pos_y() - start_y] = (
-                    measure_cactus_current()
-                )
+                layout[get_pos_x() - start_x][get_pos_y() - start_y] = measure_cactus()
 
             visit_square(size, analyze)
 
