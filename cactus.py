@@ -228,25 +228,50 @@ def cacti_thread(start_x, start_y, size):
 def cocktail_shaker(dir: Direction, x, y, size):
     move_to(x, y)
     opp = opposite(dir)
-    # For now, we just sort the one in front of us. We can optimize a bit later.
-    # If there are N spaces, we need to do ~N passes (again, optimize later)
-    for i in range(size):
-        did_swap = False
-        for j in range(size - i - 1):
-            if i % 2 == 0:
-                if measure_cactus() > measure_cactus(dir):
-                    swap(dir)
-                    did_swap = True
-                if j != size - i - 2:
-                    move(dir)
+    # From this index upward is sorted
+    top_sorted = size - 1
+    # From this index downward is sorted
+    bottom_sorted = 0
+    position = 0
+    min_pos = 1
+    max_pos = size - 2
+
+    forwards = True
+    did_swap = False
+    while top_sorted > bottom_sorted:
+        did_swap_now = False
+        if forwards:
+            if measure_cactus() > measure_cactus(dir):
+                swap(dir)
+                did_swap = True
+                did_swap_now = True
+            elif not did_swap and position > bottom_sorted:
+                bottom_sorted = position
+
+            if position == max_pos or (position >= top_sorted - 1 and not did_swap_now):
+                did_swap = False
+                forwards = False
+                max_pos -= 1
             else:
-                if measure_cactus() < measure_cactus(opp):
-                    swap(opp)
-                    did_swap = True
-                if j != size - i - 2:
-                    move(opp)
-        if not did_swap:
-            break
+                move(dir)
+                position += 1
+        else:
+            if measure_cactus() < measure_cactus(opp):
+                swap(opp)
+                did_swap = True
+                did_swap_now = True
+            elif not did_swap and position < top_sorted:
+                top_sorted = position
+
+            if position == min_pos or (
+                position <= bottom_sorted + 1 and not did_swap_now
+            ):
+                did_swap = False
+                forwards = True
+                min_pos += 1
+            else:
+                move(opp)
+                position -= 1
 
 
 def mega_plant(x, y, size, bootstrap):
