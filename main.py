@@ -97,20 +97,6 @@ def pumpkin_dispatch():
     pumpkin_thread(0, 0, size)
 
 
-def get_fertilizer():
-    while True:
-        for j in range(get_world_size()):
-            for i in range(get_world_size()):
-                if i % 2 == j % 2:
-                    if can_harvest():
-                        harvest()
-                    plant(Entities.Tree)
-                    use_item(Items.Fertilizer)
-                move(North)
-                if i == get_world_size() - 1:
-                    move(East)
-
-
 def fast_hay(init=True, y=0):
     if init:
         clear()

@@ -1,6 +1,23 @@
 from utils import move_to, opposite
 
 
+def get_weird_substance(leader=True, x=0):
+    move_to(x, 0)
+    if leader:
+        for i in range(get_world_size() - 1):
+            spawn_drone(get_weird_substance, False, i + 1)
+
+    if x % 2 == 1:
+        move(North)
+    while True:
+        if can_harvest():
+            harvest()
+        plant(Entities.Tree)
+        use_item(Items.Fertilizer)
+        move(North)
+        move(North)
+
+
 def maze():
     plant(Entities.Bush)
     substance = get_world_size() * 2 ** (num_unlocked(Unlocks.Mazes) - 1)
