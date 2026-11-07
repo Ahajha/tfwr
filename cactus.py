@@ -1,4 +1,5 @@
 from __builtins__ import (
+    Direction,
     East,
     Entities,
     North,
@@ -13,10 +14,12 @@ from __builtins__ import (
     measure,
     move,
     plant,
+    spawn_drone,
     swap,
     till,
+    wait_for,
 )
-from utils import move_to, visit_square
+from utils import WORLD_SIZE, move_to, opposite, visit_square
 
 
 # For laundering the return type, since it depends on the entity. Purely to make type checking happy.
@@ -241,3 +244,56 @@ def cacti_thread(start_x, start_y, size):
                 sort_cross(layout, x, y, size, spot, new_sort_spots)
 
             sort_spots = new_sort_spots
+
+
+def cocktail_shaker(dir: Direction, x, y, size):
+    move_to(x, y)
+    opp = opposite(dir)
+    # For now, we just sort the one in front of us. We can optimize a bit later.
+    # If there are N spaces, we need to do ~N passes (again, optimize later)
+    for i in range(size):
+        for j in range(size - i - 1):
+            if i % 2 == 0:
+                if measure_cactus() > measure_cactus(dir):
+                    swap(dir)
+                if j != size - i - 2:
+                    move(dir)
+            else:
+                if measure_cactus() < measure_cactus(opp):
+                    swap(opp)
+                if j != size - i - 2:
+                    move(opp)
+
+
+def mega_plant(x, y, size):
+    move_to(x, y)
+    for _ in range(size):
+        till()
+        plant(Entities.Cactus)
+        move(North)
+
+    move_to(x, y)  # noop if size == WORLD_SIZE
+
+    cocktail_shaker(North, x, y, size)
+
+
+def mega_cactus(size=WORLD_SIZE):
+    # 32 x 32 cactus!
+
+    drones = []
+    for i in range(size - 1):
+        drones.append(spawn_drone(mega_plant, i + 1, 0, size))  # type: ignore
+    mega_plant(0, 0, size)
+
+    for drone in drones:
+        wait_for(drone)
+
+    for i in range(size - 1):
+        drones.append(spawn_drone(cocktail_shaker, East, 0, i + 1, size))  # type: ignore
+
+    cocktail_shaker(East, 0, 0, size)
+
+    for drone in drones:
+        wait_for(drone)
+
+    harvest()
