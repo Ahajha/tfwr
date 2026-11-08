@@ -1,5 +1,4 @@
 from cactus import cacti_thread
-from maze import maze, solve_maze_multithreaded
 from pumpkin import pumpkin_thread
 from utils import move_to
 
@@ -110,11 +109,6 @@ def fast_hay(init=True, y=0):
         harvest()
 
 
-def mazes():
-    maze()
-    solve_maze_multithreaded()
-
-
 def multifarm(x, y):
     move_to(x, y)
     crops = [Entities.Bush, Entities.Tree, Entities.Carrot, None]
@@ -147,5 +141,4 @@ def multifarm_dispatch():
 clear()
 multifarm_dispatch()
 # pumpkin_dispatch()
-# mazes()
 # multithread_farm()

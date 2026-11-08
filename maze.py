@@ -110,10 +110,12 @@ def solve_maze_multithreaded(stack=[]):
         stack = [(get_candidates(), None)]
 
 
-DUMB_MAZE_SIZE = 4
+DUMB_MAZE_SIZE = 5
 
 
 def dumb_mazes(init=True, x=0, y=0):
+    set_world_size(DUMB_MAZE_SIZE)
+    substance_amount = DUMB_MAZE_SIZE * 2 ** (num_unlocked(Unlocks.Mazes) - 1)
     if init:
         clear()
         for i in range(DUMB_MAZE_SIZE):
@@ -122,13 +124,19 @@ def dumb_mazes(init=True, x=0, y=0):
                     # This thread
                     continue
                 spawn_drone(dumb_mazes, False, i, j)
-
+        do_a_flip()
+        plant(Entities.Bush)
+        use_item(Items.Weird_Substance, substance_amount)
     move_to(x, y)
 
     while True:
-        if init:
-            plant(Entities.Bush)
-            substance = DUMB_MAZE_SIZE * 2 ** (num_unlocked(Unlocks.Mazes) - 1)
-            use_item(Items.Weird_Substance, substance)
-        if get_entity_type() == Entities.Treasure:
-            harvest()
+        if measure() == (x, y):
+            if not use_item(Items.Weird_Substance, substance_amount):
+                harvest()
+                plant(Entities.Bush)
+                use_item(Items.Weird_Substance, substance_amount)
+
+
+if __name__ == "__main__":
+    clear()
+    dumb_mazes()
