@@ -51,8 +51,8 @@ def opposite(dir):
     return East
 
 
-def visit_square(size, action):
-    # Visits every spot in a square and applies an action.
+def visit_rectangle(size_x, size_y, action):
+    # Visits every spot in a rectange and applies an action.
     # Goes in this order (6x6 for example):
     #
     # v<<<<<
@@ -65,23 +65,27 @@ def visit_square(size, action):
     # Assumes starting in the lower-left corner, and returns there.
     action()
     move(East)
-    size_1 = size - 1
-    size_2 = size - 2
+    size_y_1 = size_y - 1
+    size_x_2 = size_x - 2
     is_east = True
-    for i in range(size):
+    for i in range(size_y):
         if is_east:
             dir = East
         else:
             dir = West
 
-        for _ in range(size_2):
+        for _ in range(size_x_2):
             action()
             move(dir)
         action()
-        if i < size_1:
+        if i < size_y_1:
             move(North)
         is_east = not is_east
     move(West)
-    for _ in range(size_1):
+    for _ in range(size_y_1):
         action()
         move(South)
+
+
+def visit_square(size, action):
+    visit_rectangle(size, size, action)
