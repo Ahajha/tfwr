@@ -1,8 +1,10 @@
 from utils import move_to, visit_rectangle
 
 
-def _grow_pumpkin(size_x, size_y, init):
+def _grow_pumpkin(start_x, start_y, size_x, size_y, init):
     # Grows a size * size pumpkin at the current location
+    move_to(start_x, start_y)
+
     def plant_pumpkin():
         if init:
             till()
@@ -46,15 +48,9 @@ def pumpkin_thread(start_x, start_y, size):
         return
     init = True
     while True:
-        move_to(start_x, start_y)
-        _grow_pumpkin(size, size, init)
+        _grow_pumpkin(start_x, start_y, size, size, init)
         harvest()
         init = False
-
-
-def _move_and_grow(x, y, size_x, size_y, init):
-    move_to(x, y)
-    _grow_pumpkin(size_x, size_y, init)
 
 
 def mega_pumpkin():
@@ -67,10 +63,9 @@ def mega_pumpkin():
             for j in range(4):
                 if i == 0 and j == 0:
                     continue
-                drones.append(spawn_drone(_move_and_grow, i * 4, j * 8, 4, 8, init))  # type: ignore
+                drones.append(spawn_drone(_grow_pumpkin, i * 4, j * 8, 4, 8, init))  # type: ignore
 
-        move_to(0, 0)
-        _grow_pumpkin(4, 8, init)
+        _grow_pumpkin(0, 0, 4, 8, init)
         for drone in drones:
             wait_for(drone)
 
