@@ -1,4 +1,4 @@
-from utils import move_to, visit_square
+from utils import WORLD_SIZE, move_to, visit_square
 
 
 def measure_sunflower() -> int:
@@ -37,6 +37,54 @@ def dumb_sunflower():
         init = False
 
 
+def multithreaded_sunflower(size=WORLD_SIZE):
+    init = True
+
+    def plant_sunflowers(x):
+        move_to(x, 0)
+        for i in range(size):
+            if init:
+                till()
+            while get_water() < 0.5:
+                use_item(Items.Water)
+            plant(Entities.Sunflower)
+            if i < size - 1:
+                move(North)
+
+    def harvest_sunflowers_of_size(x, n):
+        move_to(x, 0)
+        for i in range(size):
+            if measure_sunflower() == n:
+                while not can_harvest():
+                    pass
+                harvest()
+            if i < size - 1:
+                move(North)
+
+    while True:
+        drones = []
+        for i in range(size - 1):
+            drones.append(spawn_drone(plant_sunflowers, i + 1))  # type: ignore
+
+        plant_sunflowers(0)
+        # The above leaves us one short
+        move(North)
+
+        for drone in drones:
+            wait_for(drone)
+
+        for n in range(15, 6, -1):
+            drones = []
+            for i in range(size - 1):
+                drones.append(spawn_drone(harvest_sunflowers_of_size, i + 1, n))  # type: ignore
+
+            harvest_sunflowers_of_size(0, n)
+            # The above leaves us one short
+            move(North)
+
+        init = False
+
+
 if __name__ == "__main__":
     clear()
-    dumb_sunflower()
+    multithreaded_sunflower()
