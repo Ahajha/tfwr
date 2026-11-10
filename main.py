@@ -139,6 +139,7 @@ def multifarm_dispatch():
 
 
 clear()
-multifarm_dispatch()
+# multifarm_dispatch()
 # pumpkin_dispatch()
 # multithread_farm()
+simulate("fullreset", {}, {}, {}, 0, 1000)

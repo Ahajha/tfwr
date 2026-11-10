@@ -13,30 +13,32 @@ from __builtins__ import (
 WORLD_SIZE = get_world_size()
 
 
-def move_to(x, y, current_x=None, current_y=None):
+def move_to(x, y, current_x=None, current_y=None, size=None):
     # In case we know where we are already, we can save 2 ticks.
     if current_x == None:
         current_x = get_pos_x()
     if current_y == None:
         current_y = get_pos_y()
+    if size == None:
+        size = get_world_size()
     # The world is a torus, so normalize negatives to a positive number of moves
-    west_len = (current_x - x) % WORLD_SIZE
-    if west_len < WORLD_SIZE / 2:
+    west_len = (current_x - x) % size
+    if west_len < size / 2:
         ew_dir = West
         ew_distance = west_len
     else:
         ew_dir = East
-        ew_distance = WORLD_SIZE - west_len
+        ew_distance = size - west_len
     for _ in range(ew_distance):
         move(ew_dir)
 
-    north_len = (current_y - y) % WORLD_SIZE
-    if north_len < WORLD_SIZE / 2:
+    north_len = (current_y - y) % size
+    if north_len < size / 2:
         ns_dir = South
         ns_distance = north_len
     else:
         ns_dir = North
-        ns_distance = WORLD_SIZE - north_len
+        ns_distance = size - north_len
     for _ in range(ns_distance):
         move(ns_dir)
 
