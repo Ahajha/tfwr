@@ -18,10 +18,10 @@ def get_weird_substance(leader=True, x=0):
         move(North)
 
 
-def maze():
+def maze() -> bool:
     plant(Entities.Bush)
     substance = get_world_size() * 2 ** (num_unlocked(Unlocks.Mazes) - 1)
-    use_item(Items.Weird_Substance, substance)
+    return use_item(Items.Weird_Substance, substance)
 
 
 def solve_maze():

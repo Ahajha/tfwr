@@ -1,3 +1,4 @@
+from maze import maze, solve_maze
 from pumpkin import grow_pumpkin
 from utils import move_to
 
@@ -136,6 +137,64 @@ def run():
         grow_pumpkin(get_world_size(), get_world_size(), init)
         harvest()
         init = False
+
+    while num_items(Items.Pumpkin) < 20000:
+        move_to(0, 0)
+        grow_pumpkin(get_world_size(), get_world_size(), init)
+        harvest()
+
+    unlock(Unlocks.Expand)
+
+    while num_items(Items.Weird_Substance) < 2000:
+        plant(Entities.Tree)
+        use_item(Items.Fertilizer)
+        while not can_harvest():
+            pass
+        harvest()
+    harvest()
+    unlock(Unlocks.Mazes)
+
+    while maze():
+        solve_maze()
+
+    unlock(Unlocks.Megafarm)
+    unlock(Unlocks.Megafarm)
+    unlock(Unlocks.Polyculture)
+    unlock(Unlocks.Fertilizer)
+
+    clear()
+    unlocks = [
+        Unlocks.Grass,
+        Unlocks.Trees,
+        Unlocks.Carrots,
+        Unlocks.Pumpkins,
+        Unlocks.Pumpkins,
+        Unlocks.Fertilizer,
+        Unlocks.Fertilizer,
+        Unlocks.Watering,
+        Unlocks.Watering,
+        Unlocks.Watering,
+        Unlocks.Carrots,
+    ]
+    for unlock_ in unlocks:
+        while not unlock(unlock_):
+            polyculture_square(get_world_size())
+
+    while num_items(Items.Carrot) < 20000:
+        polyculture_square(get_world_size())
+
+    clear()
+    while num_items(Items.Weird_Substance) < 120000:
+        plant(Entities.Tree)
+        use_item(Items.Fertilizer)
+        while not can_harvest():
+            pass
+        harvest()
+    harvest()
+
+    while maze():
+        solve_maze()
+        unlock(Unlocks.Megafarm)
 
     while True:
         pass
