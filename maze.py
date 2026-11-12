@@ -258,13 +258,52 @@ def maze_at(x, y, size):
         move_to(x, y)
 
 
-if __name__ == "__main__":
-    clear()
+def many_mazes():
     # When a drone spawns a maze, it tries to center itself in it.
     # Place the coords so that the mazes align with the grid we're making.
-    for x in [4, 12, 20, 28]:
-        for y in [4, 12, 20, 28]:
-            if x == 4 and y == 4:
-                continue
-            spawn_drone(maze_at, x, y, 8)  # type: ignore
-    maze_at(4, 4, 8)
+    MAZES = [
+        # A 4x4 grid of 6x6s
+        (3, 3, 6),
+        (9, 3, 6),
+        (15, 3, 6),
+        (21, 3, 6),
+        (3, 9, 6),
+        (9, 9, 6),
+        (15, 9, 6),
+        (21, 9, 6),
+        (3, 15, 6),
+        (9, 15, 6),
+        (15, 15, 6),
+        (21, 15, 6),
+        (3, 21, 6),
+        (9, 21, 6),
+        (15, 21, 6),
+        (21, 21, 6),
+        # Then 4 8x8s along one edge
+        (28, 4, 8),
+        (28, 12, 8),
+        (28, 20, 8),
+        (28, 28, 8),
+        # And fill the rest with 4x4s (12 total)
+        (2, 26, 4),
+        (2, 30, 4),
+        (6, 26, 4),
+        (6, 30, 4),
+        (10, 26, 4),
+        (10, 30, 4),
+        (14, 26, 4),
+        (14, 30, 4),
+        (18, 26, 4),
+        (18, 30, 4),
+        (22, 26, 4),
+        (22, 30, 4),
+    ]
+
+    for x, y, size in MAZES[:-1]:
+        spawn_drone(maze_at, x, y, size)  # type: ignore
+    maze_at(MAZES[-1][0], MAZES[-1][1], MAZES[-1][2])
+
+
+if __name__ == "__main__":
+    clear()
+    many_mazes()
