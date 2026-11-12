@@ -137,6 +137,110 @@ def dumb_mazes(init=True, x=0, y=0):
                 use_item(Items.Weird_Substance, substance_amount)
 
 
+def measure_treasure() -> tuple[int, int]:
+    return measure()  # type: ignore
+
+
+def maze_tree():
+    maze()
+
+    # As we explore the maze, we build a virtual tree of the layout.
+    # Note that as we reuse the maze, cycles can form. We will try to handle these.
+    # For each cell, we track a tuple (distance, dir), which is the distance from
+    # the root, and the direction towards the root (for the root, this is (0/None)).
+
+    size = get_world_size()
+    layout: list[list[tuple[int, Direction | None]]] = []
+    for _ in range(size):
+        row = []
+        for _ in range(size):
+            row.append((-1, None))
+        layout.append(row)
+
+    # We traverse the whole maze, marking what we see. Use the "hug left wall" strategy.
+    DIRS = [North, East, South, West]
+    dir = 0
+
+    n_marked = 0
+    current_distance = 0
+    while n_marked != size * size:
+        pos_x = get_pos_x()
+        pos_y = get_pos_y()
+
+        # If you've discovered something new, you're always going away from the root.
+        # This also means that the direction to the root is always the opposite of the
+        # direction you came from.
+        if layout[pos_x][pos_y][0] == -1:
+            current_distance += 1
+            n_marked += 1
+            layout[pos_x][pos_y] = (current_distance, opposite(DIRS[dir]))
+        else:
+            current_distance = layout[pos_x][pos_y][0]
+
+        # Note this doesn't work in 1x1 mazes
+        # Prioritize Left, Straight, Right. Only go back if you have to.
+        for i in [3, 0, 1, 2]:
+            if can_move(DIRS[(dir + i) % 4]):
+                dir = (dir + i) % 4
+                break
+
+        move(DIRS[dir])
+
+    for _ in range(300):
+        # Then, for each treasure, we trace two paths:
+        # 1. Ourselves towards the root
+        # 2. The treasure towards the root
+        # Eventually, these paths will meet.
+        self_towards_root = [(get_pos_x(), get_pos_y())]
+        treasure_towards_root = [measure_treasure()]
+
+        while self_towards_root[-1] != treasure_towards_root[-1]:
+            self_distance, self_dir = layout[self_towards_root[-1][0]][
+                self_towards_root[-1][1]
+            ]
+            treasure_distance, treasure_dir = layout[treasure_towards_root[-1][0]][
+                treasure_towards_root[-1][1]
+            ]
+
+            if self_distance >= treasure_distance:
+                px, py = self_towards_root[-1]
+                if self_dir == North:
+                    self_towards_root.append((px, py + 1))
+                elif self_dir == East:
+                    self_towards_root.append((px + 1, py))
+                elif self_dir == South:
+                    self_towards_root.append((px, py - 1))
+                elif self_dir == West:
+                    self_towards_root.append((px - 1, py))
+            if treasure_distance >= self_distance:
+                px, py = treasure_towards_root[-1]
+                if treasure_dir == North:
+                    treasure_towards_root.append((px, py + 1))
+                elif treasure_dir == East:
+                    treasure_towards_root.append((px + 1, py))
+                elif treasure_dir == South:
+                    treasure_towards_root.append((px, py - 1))
+                elif treasure_dir == West:
+                    treasure_towards_root.append((px - 1, py))
+
+        quick_print(self_towards_root)
+        quick_print(treasure_towards_root)
+
+        # Finally, we take path 1 plus the reverse of path 2.
+        # Skip the last element of first and first element of the second.
+        for pos_x, pos_y in self_towards_root[:-1]:
+            if not move(layout[pos_x][pos_y][1]):
+                print("Failed to move")
+        for i in range(len(treasure_towards_root) - 2, -1, -1):
+            pos_x, pos_y = treasure_towards_root[i]
+            if not move(opposite(layout[pos_x][pos_y][1])):
+                print("Failed to move")
+
+        substance = size * 2 ** (num_unlocked(Unlocks.Mazes) - 1)
+        use_item(Items.Weird_Substance, substance)
+
+
 if __name__ == "__main__":
     clear()
-    dumb_mazes()
+    # set_world_size(6)
+    maze_tree()
