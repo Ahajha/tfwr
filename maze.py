@@ -18,9 +18,11 @@ def get_weird_substance(leader=True, x=0):
         move(North)
 
 
-def maze() -> bool:
+def maze(size=None) -> bool:
+    if size == None:
+        size = get_world_size()
     plant(Entities.Bush)
-    substance = get_world_size() * 2 ** (num_unlocked(Unlocks.Mazes) - 1)
+    substance = size * 2 ** (num_unlocked(Unlocks.Mazes) - 1)
     return use_item(Items.Weird_Substance, substance)
 
 
@@ -141,15 +143,22 @@ def measure_treasure() -> tuple[int, int]:
     return measure()  # type: ignore
 
 
-def maze_tree():
-    maze()
+DIRS = [North, East, South, West]
+
+
+def maze_tree(start_x, start_y, size):
+    move_to(start_x, start_y)
+    maze(size)
+
+    # Might be weird with odd numbers
+    x_offset = start_x - size / 2
+    y_offset = start_y - size / 2
 
     # As we explore the maze, we build a virtual tree of the layout.
     # Note that as we reuse the maze, cycles can form. We will try to handle these.
     # For each cell, we track a tuple (distance, dir), which is the distance from
     # the root, and the direction towards the root (for the root, this is (0/None)).
 
-    size = get_world_size()
     layout: list[list[tuple[int, Direction | None]]] = []
     for _ in range(size):
         row = []
@@ -158,14 +167,13 @@ def maze_tree():
         layout.append(row)
 
     # We traverse the whole maze, marking what we see. Use the "hug left wall" strategy.
-    DIRS = [North, East, South, West]
     dir = 0
 
     n_marked = 0
     current_distance = 0
     while n_marked != size * size:
-        pos_x = get_pos_x()
-        pos_y = get_pos_y()
+        pos_x = get_pos_x() - x_offset
+        pos_y = get_pos_y() - y_offset
 
         # If you've discovered something new, you're always going away from the root.
         # This also means that the direction to the root is always the opposite of the
@@ -191,8 +199,9 @@ def maze_tree():
         # 1. Ourselves towards the root
         # 2. The treasure towards the root
         # Eventually, these paths will meet.
-        self_towards_root = [(get_pos_x(), get_pos_y())]
-        treasure_towards_root = [measure_treasure()]
+        self_towards_root = [(get_pos_x() - x_offset, get_pos_y() - y_offset)]
+        tr_x, tr_y = measure_treasure()
+        treasure_towards_root = [(tr_x - x_offset, tr_y - y_offset)]
 
         while self_towards_root[-1] != treasure_towards_root[-1]:
             self_distance, self_dir = layout[self_towards_root[-1][0]][
@@ -223,9 +232,6 @@ def maze_tree():
                 elif treasure_dir == West:
                     treasure_towards_root.append((px - 1, py))
 
-        quick_print(self_towards_root)
-        quick_print(treasure_towards_root)
-
         # Finally, we take path 1 plus the reverse of path 2.
         # Skip the last element of first and first element of the second.
         for pos_x, pos_y in self_towards_root[:-1]:
@@ -240,7 +246,25 @@ def maze_tree():
         use_item(Items.Weird_Substance, substance)
 
 
+def maze_at(x, y, size):
+    quick_print("Starting at ", x, y)
+    move_to(x, y)
+    do_a_flip()
+    do_a_flip()
+    while True:
+        maze_tree(x, y, size)
+        quick_print("Resetting at ", x, y)
+        harvest()
+        move_to(x, y)
+
+
 if __name__ == "__main__":
     clear()
-    # set_world_size(6)
-    maze_tree()
+    # When a drone spawns a maze, it tries to center itself in it.
+    # Place the coords so that the mazes align with the grid we're making.
+    for x in [4, 12, 20, 28]:
+        for y in [4, 12, 20, 28]:
+            if x == 4 and y == 4:
+                continue
+            spawn_drone(maze_at, x, y, 8)  # type: ignore
+    maze_at(4, 4, 8)
