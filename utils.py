@@ -9,9 +9,6 @@ from __builtins__ import (
     move,
 )
 
-# Save us a tick per call, we assume the world size doesn't change mid-run.
-WORLD_SIZE = get_world_size()
-
 
 def move_to(x, y, current_x=None, current_y=None, size=None):
     # In case we know where we are already, we can save 2 ticks.

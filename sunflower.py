@@ -1,4 +1,4 @@
-from utils import WORLD_SIZE, move_to, visit_square
+from utils import move_to, visit_square
 
 
 def measure_sunflower() -> int:
@@ -37,7 +37,9 @@ def dumb_sunflower():
         init = False
 
 
-def multithreaded_sunflower(size=WORLD_SIZE):
+def multithreaded_sunflower(size=None):
+    if size == None:
+        size = get_world_size()
     init = True
 
     def plant_sunflowers(x):

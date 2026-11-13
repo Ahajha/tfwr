@@ -1,4 +1,4 @@
-from utils import WORLD_SIZE, move_to, opposite, visit_square
+from utils import move_to, opposite, visit_square
 
 
 # For laundering the return type, since it depends on the entity. Purely to make type checking happy.
@@ -282,16 +282,18 @@ def mega_plant(x, y, size, bootstrap):
         plant(Entities.Cactus)
         move(North)
 
-    move_to(x, y)  # noop if size == WORLD_SIZE
+    move_to(x, y)  # noop if size == get_world_size()
 
     cocktail_shaker(North, x, y, size)
 
 
-def mega_cactus(size=WORLD_SIZE):
+def mega_cactus(stop_condition, size=None):
     # 32 x 32 cactus!
+    if size == None:
+        size = get_world_size()
 
     bootstrap = True
-    while True:
+    while not stop_condition():
         start = get_time()
 
         drones = []
@@ -321,4 +323,8 @@ def mega_cactus(size=WORLD_SIZE):
 
 if __name__ == "__main__":
     clear()
-    mega_cactus()
+
+    def never():
+        return False
+
+    mega_cactus(never)

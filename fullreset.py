@@ -1,4 +1,6 @@
-from maze import maze, solve_maze
+from cactus import mega_cactus
+from dinosoar import dinosoar
+from maze import many_mazes, maze, maze_tree, solve_maze
 from pumpkin import grow_pumpkin
 from utils import move_to
 
@@ -54,6 +56,38 @@ def polyculture_square(size):
                     plant(Entities.Carrot)
             move(North)
         move(East)
+
+
+def maze_tree_wrap(x, y, size):
+    do_a_flip()
+    # This does all of the drone unlocking at once
+    while num_unlocked(Unlocks.Megafarm) < 5:
+        maze_tree(x, y, size)
+        harvest()
+        unlock(Unlocks.Megafarm)
+
+
+def polyculture_multidrone(x, y, stop_condition):
+    move_to(x, y)
+    crops = [Entities.Bush, Entities.Tree, Entities.Carrot, None]
+
+    bootstrap = True
+
+    offset = x % 4
+    size = get_world_size()
+    while not stop_condition():
+        for i in range(size):
+            if can_harvest():
+                harvest()
+            elif get_water() < 0.5:
+                use_item(Items.Water)
+            crop = crops[(i + offset) % 4]
+            if crop:
+                if crop == Entities.Carrot and bootstrap:
+                    till()
+                plant(crop)
+            move(North)
+        bootstrap = False
 
 
 def run():
@@ -192,12 +226,88 @@ def run():
         harvest()
     harvest()
 
-    while maze():
-        solve_maze()
-        unlock(Unlocks.Megafarm)
+    # Get all the drones
+    drones = []
+    # Currently a 12x12
+    MAZES = [
+        (3, 9, 6),
+        (9, 3, 6),
+        (9, 9, 6),
+    ]
+    for x, y, size in MAZES:
+        drones.append(spawn_drone(maze_tree_wrap, x, y, size))  # type: ignore
+    maze_tree_wrap(3, 3, 6)
+    for drone in drones:
+        wait_for(drone)
 
-    while True:
+    # Do some crazy polyculture
+    def polyculture_cond():
+        # Probably overkill for this run
+        unlock(Unlocks.Grass)
+        unlock(Unlocks.Trees)
+        unlock(Unlocks.Carrots)
+        unlock(Unlocks.Pumpkins)
+        return (
+            num_unlocked(Unlocks.Grass) >= 10
+            and num_unlocked(Unlocks.Trees) >= 10
+            and num_unlocked(Unlocks.Carrots) >= 10
+            and num_items(Items.Carrot) >= 100000000
+        )
+
+    drones = []
+    for i in range(get_world_size() - 1):
+        drones.append(spawn_drone(polyculture_multidrone, i + 1, 0, polyculture_cond))  # type: ignore
+    polyculture_multidrone(0, 0, polyculture_cond)
+
+    clear()
+    for _ in range(3):
+        init = True
+        while not unlock(Unlocks.Expand):
+            move_to(0, 0)
+            grow_pumpkin(get_world_size(), get_world_size(), init)
+            harvest()
+            init = False
+
+    init = True
+    while num_items(Items.Pumpkin) < 20000000:
+        move_to(0, 0)
+        grow_pumpkin(get_world_size(), get_world_size(), init)
+        harvest()
+        init = False
+
+    while unlock(Unlocks.Cactus):
         pass
+
+    def cactus_condition():
+        return num_items(Items.Cactus) >= 5000000
+
+    clear()
+    mega_cactus(cactus_condition)
+
+    while unlock(Unlocks.Dinosaurs):
+        pass
+    while unlock(Unlocks.Mazes):
+        pass
+
+    unlock(Unlocks.Hats)
+    set_world_size(20)
+    dinosoar()
+    set_world_size(32)
+
+    def maze_stop_condition():
+        unlock(Unlocks.Leaderboard)
+        return num_unlocked(Unlocks.Leaderboard) > 0
+
+    clear()
+    while num_items(Items.Weird_Substance) < 200000:
+        plant(Entities.Tree)
+        use_item(Items.Fertilizer)
+        while not can_harvest():
+            pass
+        harvest()
+    harvest()
+
+    many_mazes(maze_stop_condition)
 
 
 if __name__ == "__main__":

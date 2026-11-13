@@ -1,14 +1,8 @@
 from utils import move_to
 
-change_hat(Hats.Cactus_Hat)
-# set_world_size(16)
-
 
 def measure_apple() -> tuple[int, int]:
     return measure()  # type: ignore
-
-
-size = get_world_size()
 
 
 def should_do_loop(apple_pos, loop_num, length, size) -> bool:
@@ -30,6 +24,7 @@ def should_do_loop(apple_pos, loop_num, length, size) -> bool:
 
 
 def dinosoar():
+    size = get_world_size()
     length = 1
     move_to(0, 0)
     change_hat(Hats.Dinosaur_Hat)
@@ -91,5 +86,6 @@ def dinosoar():
     change_hat(Hats.Cactus_Hat)
 
 
-while True:
-    dinosoar()
+if __name__ == "__main__":
+    while True:
+        dinosoar()

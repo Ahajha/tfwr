@@ -246,19 +246,23 @@ def maze_tree(start_x, start_y, size):
         use_item(Items.Weird_Substance, substance)
 
 
-def maze_at(x, y, size):
+def maze_at(x, y, size, stop_condition):
     quick_print("Starting at ", x, y)
     move_to(x, y)
     do_a_flip()
     do_a_flip()
-    while True:
+    while not stop_condition():
         maze_tree(x, y, size)
         quick_print("Resetting at ", x, y)
         harvest()
         move_to(x, y)
 
 
-def many_mazes():
+def never():
+    return False
+
+
+def many_mazes(stop_condition=never):
     # When a drone spawns a maze, it tries to center itself in it.
     # Place the coords so that the mazes align with the grid we're making.
     MAZES = [
@@ -300,8 +304,8 @@ def many_mazes():
     ]
 
     for x, y, size in MAZES[:-1]:
-        spawn_drone(maze_at, x, y, size)  # type: ignore
-    maze_at(MAZES[-1][0], MAZES[-1][1], MAZES[-1][2])
+        spawn_drone(maze_at, x, y, size, stop_condition)  # type: ignore
+    maze_at(MAZES[-1][0], MAZES[-1][1], MAZES[-1][2], stop_condition)
 
 
 if __name__ == "__main__":
