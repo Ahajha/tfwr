@@ -11,7 +11,6 @@ def harvest_rice():
     while not can_harvest():
         pass
     harvest()
-    dig()
 
 
 def rice(x, y, size):
