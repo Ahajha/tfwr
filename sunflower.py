@@ -66,7 +66,7 @@ def multithreaded_sunflower(size=None):
     while True:
         drones = []
         for i in range(size - 1):
-            drones.append(spawn_drone(plant_sunflowers, i + 1))  # type: ignore
+            drones.append(spawn_drone(plant_sunflowers, i + 1))
 
         plant_sunflowers(0)
         # The above leaves us one short
@@ -78,7 +78,7 @@ def multithreaded_sunflower(size=None):
         for n in range(15, 6, -1):
             drones = []
             for i in range(size - 1):
-                drones.append(spawn_drone(harvest_sunflowers_of_size, i + 1, n))  # type: ignore
+                drones.append(spawn_drone(harvest_sunflowers_of_size, i + 1, n))
 
             harvest_sunflowers_of_size(0, n)
             # The above leaves us one short

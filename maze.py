@@ -304,7 +304,7 @@ def many_mazes(stop_condition=never):
     ]
 
     for x, y, size in MAZES[:-1]:
-        spawn_drone(maze_at, x, y, size, stop_condition)  # type: ignore
+        spawn_drone(maze_at, x, y, size, stop_condition)
     maze_at(MAZES[-1][0], MAZES[-1][1], MAZES[-1][2], stop_condition)
 
 

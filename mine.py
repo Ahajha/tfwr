@@ -26,7 +26,7 @@ def multimine():
         (28, 28),
     ]
     for x, y in DIG_SITES:
-        spawn_drone(always_dig, x, y)  # type: ignore
+        spawn_drone(always_dig, x, y)
     always_dig(4, 4)
 
 

@@ -235,7 +235,7 @@ def run():
         (9, 9, 6),
     ]
     for x, y, size in MAZES:
-        drones.append(spawn_drone(maze_tree_wrap, x, y, size))  # type: ignore
+        drones.append(spawn_drone(maze_tree_wrap, x, y, size))
     maze_tree_wrap(3, 3, 6)
     for drone in drones:
         wait_for(drone)
@@ -256,7 +256,7 @@ def run():
 
     drones = []
     for i in range(get_world_size() - 1):
-        drones.append(spawn_drone(polyculture_multidrone, i + 1, 0, polyculture_cond))  # type: ignore
+        drones.append(spawn_drone(polyculture_multidrone, i + 1, 0, polyculture_cond))
     polyculture_multidrone(0, 0, polyculture_cond)
 
     clear()

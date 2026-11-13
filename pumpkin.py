@@ -79,7 +79,7 @@ def mega_pumpkin():
         for j in range(8):
             if i == 0 and j == 0:
                 continue
-            spawn_drone(_mega_pumpkin_thread, i * 8, j * 4, 8, 4)  # type: ignore
+            spawn_drone(_mega_pumpkin_thread, i * 8, j * 4, 8, 4)
 
     move_to(0, 0)
     while True:

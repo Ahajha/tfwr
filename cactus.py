@@ -298,14 +298,14 @@ def mega_cactus(stop_condition, size=None):
 
         drones = []
         for i in range(size - 1):
-            drones.append(spawn_drone(mega_plant, i + 1, 0, size, bootstrap))  # type: ignore
+            drones.append(spawn_drone(mega_plant, i + 1, 0, size, bootstrap))
         mega_plant(0, 0, size, bootstrap)
 
         for drone in drones:
             wait_for(drone)
 
         for i in range(size - 1):
-            drones.append(spawn_drone(cocktail_shaker, East, 0, i + 1, size))  # type: ignore
+            drones.append(spawn_drone(cocktail_shaker, East, 0, i + 1, size))
 
         cocktail_shaker(East, 0, 0, size)
 

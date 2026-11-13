@@ -88,11 +88,11 @@ def pumpkin_dispatch():
     ]
 
     for start in pumpkin_starts:
-        spawn_drone(pumpkin_thread, start[0], start[1], size)  # type: ignore
+        spawn_drone(pumpkin_thread, start[0], start[1], size)
     for start in cacti_starts:
-        spawn_drone(cacti_thread, start[0], start[1], size)  # type: ignore
+        spawn_drone(cacti_thread, start[0], start[1], size)
     for start in carrot_starts:
-        spawn_drone(carrot_thread, start[0], start[1], start[2])  # type: ignore
+        spawn_drone(carrot_thread, start[0], start[1], start[2])
     pumpkin_thread(0, 0, size)
 
 
@@ -134,7 +134,7 @@ def multifarm(x, y):
 
 def multifarm_dispatch():
     for i in range(get_world_size() - 1):
-        spawn_drone(multifarm, i + 1, 0)  # type: ignore
+        spawn_drone(multifarm, i + 1, 0)
     multifarm(0, 0)
 
 

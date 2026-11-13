@@ -43,7 +43,7 @@ def multirice():
     while True:
         drones = []
         for x, y, size in SITES:
-            drones.append(spawn_drone(rice, x, y, size))  # type: ignore
+            drones.append(spawn_drone(rice, x, y, size))
         rice(0, 0, 8)
         for drone in drones:
             wait_for(drone)
