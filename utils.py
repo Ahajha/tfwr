@@ -1,15 +1,3 @@
-from __builtins__ import (
-    East,
-    North,
-    South,
-    West,
-    get_pos_x,
-    get_pos_y,
-    get_world_size,
-    move,
-)
-
-
 def move_to(x, y, current_x=None, current_y=None, size=None):
     # In case we know where we are already, we can save 2 ticks.
     if current_x == None:
