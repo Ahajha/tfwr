@@ -51,13 +51,18 @@ def bamboo(x, y):
                 move(North)
 
         hover(0)
-        move(East)
-        for _ in range(size):
-            move(North)
         move(West)
-        move(West)
-        for _ in range(size):
+        # We intentionally slow the drone down a bit, to let
+        # the bamboo grow to its full size before harvesting
+        for i in range(size):
+            if i % 2 == 0:
+                move(East)
+                move(East)
+            else:
+                move(West)
+                move(West)
             move(North)
+
         init = False
 
 
