@@ -67,4 +67,6 @@ def bamboo(x, y):
 
 if __name__ == "__main__":
     clear()
+    for i in range(3, get_world_size() - 3, 3):
+        spawn_drone(bamboo, i, 0)
     bamboo(0, 0)
