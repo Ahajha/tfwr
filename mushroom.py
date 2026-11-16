@@ -10,9 +10,9 @@ def mushroom():
 
     size = get_world_size()
     # Grid of (measure, height)
-    info: list[list[tuple[int, int]]] = []
+    info: list[list[tuple[int | None, int | None]]] = []
     for _ in range(size):
-        row = []
+        row: list[tuple[int | None, int | None]] = []
         for _ in range(size):
             row.append((0, 0))
         info.append(row)
@@ -53,7 +53,7 @@ def mushroom():
         harvest()
         if get_ground_type() != Grounds.Mushroom:
             place(Grounds.Dirt)
-            info[dst_x][dst_y] = (100, 100)
+            info[dst_x][dst_y] = (None, get_pos_z())
         else:
             info[dst_x][dst_y] = (measure_mushroom(), get_pos_z())
         new_to_visit.add((src_x, src_y))
@@ -63,6 +63,8 @@ def mushroom():
     while to_visit:
         for x, y in to_visit:
             mtype, z = info[x][y]
+            if mtype == None:
+                continue
             candidate_random_dirs = []
             if x < size - 1:
                 result = try_dir(x, y, z, mtype, x + 1, y, West)
@@ -137,5 +139,5 @@ def mushroom():
 
 if __name__ == "__main__":
     clear()
-    # set_world_size(6)
+    set_world_size(16)
     mushroom()
