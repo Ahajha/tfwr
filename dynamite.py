@@ -78,6 +78,16 @@ def dig_unknown_neighbors(x, y, size, info, to_resolve) -> bool:
     return False
 
 
+def find_any_unknown(info, size) -> tuple[int, int]:
+    for x in range(size):
+        for y in range(size):
+            if info[x][y] == None:
+                return (x, y)
+
+    # This should never happen
+    return (-1, -1)
+
+
 def dynamite():
     size = get_world_size()
     drones = []
@@ -107,18 +117,21 @@ def dynamite():
     to_resolve = [(get_pos_x(), get_pos_y())]
 
     while to_resolve:
+        made_progress = False
         # Concurrent modification nonsense
         defer = []
         while to_resolve:
             x, y = to_resolve.pop()
             adj_dynamite, adj_unknown = count_adjacent(x, y, size, info)
-            hint = info[x][y]
+            hint: int = info[x][y]  # type: ignore
             # If the # of dynamites + # of unknowns == the hint, mark all unknowns as dynamite
             if adj_dynamite + adj_unknown == hint:
                 mark_unknown_neighbors_as_dynamite(x, y, size, info)
+                made_progress = True
 
             # If hint == # of dynamites, dig the rest
             elif hint == adj_dynamite:
+                made_progress = True
                 if dig_unknown_neighbors(x, y, size, info, to_resolve):
                     return
 
@@ -128,13 +141,22 @@ def dynamite():
 
         to_resolve = defer
 
-    # If we've gotten here, we haven't finished. Just go to an
-    # unmarked spot and dig it :shrug:
-    for x in range(size):
-        for y in range(size):
-            if info[x][y] == None:
-                move_to(x, y)
-                dig()
+        if not made_progress:
+            # If we've gotten here, we haven't finished. Just go to an
+            # unmarked spot and dig it :shrug:
+            x, y = find_any_unknown(info, size)
+            quick_print("guessing", x, y)
+            move_to(x, y)
+            dig()
+            if get_ground_type() != Grounds.Soot:
+                # Oh no! Anyways...
+                return
+            else:
+                measure_result: int | None = measure()  # type: ignore
+                if measure_result == None:
+                    return
+                info[x][y] = measure_result
+                to_resolve.append((x, y))
 
 
 if __name__ == "__main__":
