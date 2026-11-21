@@ -112,10 +112,15 @@ def analyze_cell(
             if neighbor in xor_groups:
                 for item in xor_groups.pop(neighbor):
                     xor_groups[item].remove(neighbor)
+
+        if excluded:
+            defer.append((x, y))
+
         return True
 
     # If remaining_dynamite == 0, dig the rest
     elif remaining_dynamite == 0:
+        made_progress = True
         for i, j in adj_unknowns:
             move_to(i, j)
 
@@ -133,6 +138,10 @@ def analyze_cell(
             if neighbor in xor_groups:
                 for item in xor_groups.pop(neighbor):
                     xor_groups[item].remove(neighbor)
+
+        if excluded:
+            defer.append((x, y))
+
         return True
 
     # If we're short one, add an XOR group
