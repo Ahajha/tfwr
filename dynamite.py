@@ -55,7 +55,7 @@ def analyze_cell(
     to_resolve: list[tuple[int, int]],
     defer: list[tuple[int, int]],
     xor_groups: dict[tuple[int, int], set[tuple[int, int]]],
-) -> int:
+) -> bool:
     # Analyzes and potentially makes progress on a cell.
     # Returns true if progress was made.
 
@@ -116,11 +116,11 @@ def analyze_cell(
         if excluded:
             defer.append((x, y))
 
-        return True
+        # We only made progress if we actually did something
+        return len(adj_unknowns) > 0
 
     # If remaining_dynamite == 0, dig the rest
     elif remaining_dynamite == 0:
-        made_progress = True
         for i, j in adj_unknowns:
             move_to(i, j)
 
@@ -142,7 +142,8 @@ def analyze_cell(
         if excluded:
             defer.append((x, y))
 
-        return True
+        # We only made progress if we actually did something
+        return len(adj_unknowns) > 0
 
     # If we're short one, add an XOR group
     elif len(adj_unknowns) == 2:
