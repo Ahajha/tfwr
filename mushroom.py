@@ -224,6 +224,7 @@ def mushroom(start_x, start_y, size):
     semirandom_mushroom(info, start_x, start_y, size, 5)
 
     while True:
+        has_done_work = False
         quick_print("starting the loop")
         min_layer = None
         has_mtypes = {0: False, 1: False, 2: False, 3: False, 4: False, 5: False}
@@ -329,9 +330,17 @@ def mushroom(start_x, start_y, size):
                         get_pos_z(),
                     )
 
+                has_done_work = True
+        if not has_done_work:
+            break
+
 
 if __name__ == "__main__":
     clear()
-    set_world_size(16)
     jump(Unlocks.Mushrooms)
-    mushroom(4, 4, 8)
+    for x in range(0, get_world_size(), 8):
+        for y in range(0, get_world_size(), 8):
+            if x == 0 and y == 0:
+                continue
+            spawn_drone(mushroom, x, y, 8)
+    mushroom(0, 0, 8)
