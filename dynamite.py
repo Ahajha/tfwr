@@ -119,11 +119,7 @@ def analyze_cell(
         for i, j in adj_unknowns:
             move_to(i, j)
 
-            if info[x][y] == 0:
-                dig()
-            else:
-                # I only want a breakpoint here
-                dig()
+            dig()
             measure_result = measure_soot()
             if measure_result == None:
                 return True
@@ -183,17 +179,19 @@ def find_any_unknown(info, size) -> tuple[int, int]:
 
 def dynamite():
     size = get_world_size()
-    drones = []
-    for x in range(0, get_world_size(), 4):
-        for y in range(0, get_world_size(), 8):
-            if x == 0 and y == 0:
-                continue
-            drones.append(spawn_drone(dig_to_dynamite, x, y, 4, 8))
-    dig_to_dynamite(0, 0, 4, 8)
-    for drone in drones:
-        wait_for(drone)
-
-    move_to(size / 2, size / 2)
+    if get_ground_type() != Grounds.Dynamite:
+        drones = []
+        for x in range(0, get_world_size(), 4):
+            for y in range(0, get_world_size(), 8):
+                if x == 0 and y == 0:
+                    continue
+                drones.append(spawn_drone(dig_to_dynamite, x, y, 4, 8))
+        dig_to_dynamite(0, 0, 4, 8)
+        move_to(size / 2, size / 2)
+        for drone in drones:
+            wait_for(drone)
+    else:
+        move_to(size / 2, size / 2)
 
     dig()
 
@@ -225,9 +223,11 @@ def dynamite():
 
         to_resolve = defer
 
-        if not made_progress:
+        if not made_progress or (not to_resolve and measure_soot() != None):
             # If we've gotten here, we haven't finished. Just go to an
             # unmarked spot and dig it :shrug:
+
+            # Or, if we're about to stop but the puzzle is not solved, there must be tucked away elements still
             x, y = find_any_unknown(info, size)
             quick_print("guessing", x, y)
             move_to(x, y)
