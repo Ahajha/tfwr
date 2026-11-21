@@ -85,7 +85,6 @@ def analyze_cell(
         [][0]
 
     if info[x][y] == DYNAMITE:
-        move_to(x, y)
         return True
 
     remaining_dynamite: int = info[x][y] - len(excluded) // 2  # type: ignore
@@ -223,10 +222,6 @@ def dynamite():
                 made_progress = True
                 if measure_soot() == None:
                     return
-
-            # Otherwise, not enough information, defer
-            else:
-                defer.append((x, y))
 
         to_resolve = defer
 
