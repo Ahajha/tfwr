@@ -122,6 +122,5 @@ def dynamite():
 
 
 if __name__ == "__main__":
-    set_world_size(8)
     jump(Unlocks.Dynamite)
     dynamite()
