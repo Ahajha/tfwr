@@ -244,6 +244,7 @@ def dynamite():
 			dig()
 			if get_ground_type() != Grounds.Soot:
 				# Oh no! Anyways...
+				quick_print("failed due to guess")
 				return
 			else:
 				measure_result: int | None = measure()  # type: ignore
