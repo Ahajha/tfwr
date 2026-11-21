@@ -11,3 +11,6 @@ ignore = [
   "E711", # TFWR has no concept of "is None", so we have to do "== None"
   "F821", # ty handles the language server, and go-to-definition works with __builtins__.py
 ]
+
+[tool.ruff.format]
+indent-style = "tab"
