@@ -4,138 +4,138 @@ from utils import move_to
 
 
 def multithread_farm(id=0):
-    width = 1  # get_world_size() / max_drones()
-    for _ in range(width):
-        move(North)
-    spawn_drone(multithread_farm, id + 1)
-    while True:
-        for i in range(width):
-            for _ in range(get_world_size()):
-                if can_harvest():
-                    harvest()
-                elif get_water() < 0.5:
-                    use_item(Items.Water)
-                if (get_pos_x() + get_pos_y()) % 2 != 0:
-                    plant(Entities.Tree)
-                move(East)
-            if i == width - 1:
-                for _ in range(width - 1):
-                    move(South)
-            else:
-                move(North)
+	width = 1  # get_world_size() / max_drones()
+	for _ in range(width):
+		move(North)
+	spawn_drone(multithread_farm, id + 1)
+	while True:
+		for i in range(width):
+			for _ in range(get_world_size()):
+				if can_harvest():
+					harvest()
+				elif get_water() < 0.5:
+					use_item(Items.Water)
+				if (get_pos_x() + get_pos_y()) % 2 != 0:
+					plant(Entities.Tree)
+				move(East)
+			if i == width - 1:
+				for _ in range(width - 1):
+					move(South)
+			else:
+				move(North)
 
 
 def carrot_thread(start_x, start_y, vertical):
-    move_to(start_x, start_y)
-    bootstrap = True
-    if vertical:
-        direction = North
-    else:
-        direction = East
-    while True:
-        if bootstrap:
-            till()
-        else:
-            if can_harvest():
-                harvest()
-            elif get_water() < 0.5:
-                use_item(Items.Water)
-        plant(Entities.Carrot)
-        move(direction)
-        if get_pos_x() == start_x and get_pos_y() == start_y:
-            bootstrap = False
+	move_to(start_x, start_y)
+	bootstrap = True
+	if vertical:
+		direction = North
+	else:
+		direction = East
+	while True:
+		if bootstrap:
+			till()
+		else:
+			if can_harvest():
+				harvest()
+			elif get_water() < 0.5:
+				use_item(Items.Water)
+		plant(Entities.Carrot)
+		move(direction)
+		if get_pos_x() == start_x and get_pos_y() == start_y:
+			bootstrap = False
 
 
 def pumpkin_dispatch():
-    pumpkin_starts = [
-        (16, 0),
-        (8, 8),
-        (24, 8),
-        (0, 16),
-        (16, 16),
-        (8, 24),
-        (24, 24),
-    ]
-    cacti_starts = [
-        (8, 0),
-        (24, 0),
-        (0, 8),
-        (16, 8),
-        (8, 16),
-        (24, 16),
-        (0, 24),
-        (16, 24),
-    ]
-    size = 6
+	pumpkin_starts = [
+		(16, 0),
+		(8, 8),
+		(24, 8),
+		(0, 16),
+		(16, 16),
+		(8, 24),
+		(24, 24),
+	]
+	cacti_starts = [
+		(8, 0),
+		(24, 0),
+		(0, 8),
+		(16, 8),
+		(8, 16),
+		(24, 16),
+		(0, 24),
+		(16, 24),
+	]
+	size = 6
 
-    carrot_starts = [
-        (6, 0, True),
-        (7, 0, True),
-        (14, 0, True),
-        (15, 0, True),
-        (22, 0, True),
-        (23, 0, True),
-        (30, 0, True),
-        (31, 0, True),
-        (0, 6, False),
-        (0, 7, False),
-        (0, 14, False),
-        (0, 15, False),
-        (0, 22, False),
-        (0, 23, False),
-        (0, 30, False),
-        (0, 31, False),
-    ]
+	carrot_starts = [
+		(6, 0, True),
+		(7, 0, True),
+		(14, 0, True),
+		(15, 0, True),
+		(22, 0, True),
+		(23, 0, True),
+		(30, 0, True),
+		(31, 0, True),
+		(0, 6, False),
+		(0, 7, False),
+		(0, 14, False),
+		(0, 15, False),
+		(0, 22, False),
+		(0, 23, False),
+		(0, 30, False),
+		(0, 31, False),
+	]
 
-    for start in pumpkin_starts:
-        spawn_drone(pumpkin_thread, start[0], start[1], size)
-    for start in cacti_starts:
-        spawn_drone(cacti_thread, start[0], start[1], size)
-    for start in carrot_starts:
-        spawn_drone(carrot_thread, start[0], start[1], start[2])
-    pumpkin_thread(0, 0, size)
+	for start in pumpkin_starts:
+		spawn_drone(pumpkin_thread, start[0], start[1], size)
+	for start in cacti_starts:
+		spawn_drone(cacti_thread, start[0], start[1], size)
+	for start in carrot_starts:
+		spawn_drone(carrot_thread, start[0], start[1], start[2])
+	pumpkin_thread(0, 0, size)
 
 
 def fast_hay(init=True, y=0):
-    if init:
-        clear()
-        for i in range(max_drones() - 1):
-            spawn_drone(fast_hay, False, i + 1)
+	if init:
+		clear()
+		for i in range(max_drones() - 1):
+			spawn_drone(fast_hay, False, i + 1)
 
-    move_to(0, y)
+	move_to(0, y)
 
-    while True:
-        move(East)
-        harvest()
+	while True:
+		move(East)
+		harvest()
 
 
 def multifarm(x, y):
-    move_to(x, y)
-    crops = [Entities.Bush, Entities.Tree, Entities.Carrot, None]
+	move_to(x, y)
+	crops = [Entities.Bush, Entities.Tree, Entities.Carrot, None]
 
-    bootstrap = True
+	bootstrap = True
 
-    offset = x % 4
-    size = get_world_size()
-    while True:
-        for i in range(size):
-            if can_harvest():
-                harvest()
-            elif get_water() < 0.5:
-                use_item(Items.Water)
-            crop = crops[(i + offset) % 4]
-            if crop:
-                if crop == Entities.Carrot and bootstrap:
-                    till()
-                plant(crop)
-            move(North)
-        bootstrap = False
+	offset = x % 4
+	size = get_world_size()
+	while True:
+		for i in range(size):
+			if can_harvest():
+				harvest()
+			elif get_water() < 0.5:
+				use_item(Items.Water)
+			crop = crops[(i + offset) % 4]
+			if crop:
+				if crop == Entities.Carrot and bootstrap:
+					till()
+				plant(crop)
+			move(North)
+		bootstrap = False
 
 
 def multifarm_dispatch():
-    for i in range(get_world_size() - 1):
-        spawn_drone(multifarm, i + 1, 0)
-    multifarm(0, 0)
+	for i in range(get_world_size() - 1):
+		spawn_drone(multifarm, i + 1, 0)
+	multifarm(0, 0)
 
 
 clear()

@@ -1,4 +1,8 @@
 {
-    // Greatly reduces the number of suggested imports
-    "ty.completions.autoImport": false
+	// Greatly reduces the number of suggested imports
+	"ty.completions.autoImport": false,
+	// TFWR saves with tabs, so this avoids a bunch of changes when we save
+	"editor.insertSpaces": false,
+	"editor.detectIndentation": false,
+	"editor.tabSize": 4
 }

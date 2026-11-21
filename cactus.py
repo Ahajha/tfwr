@@ -3,7 +3,7 @@ from utils import move_to, opposite, visit_square
 
 # For laundering the return type, since it depends on the entity. Purely to make type checking happy.
 def measure_cactus(dir=None) -> int:
-    return measure(dir)  # type: ignore
+	return measure(dir)  # type: ignore
 
 
 # to figure out if a spot needs sorting:
@@ -23,308 +23,308 @@ def measure_cactus(dir=None) -> int:
 
 
 def swap_contents(layout: list[list[int]], x1: int, y1: int, x2: int, y2: int):
-    tmp = layout[x1][y1]
-    layout[x1][y1] = layout[x2][y2]
-    layout[x2][y2] = tmp
+	tmp = layout[x1][y1]
+	layout[x1][y1] = layout[x2][y2]
+	layout[x2][y2] = tmp
 
 
 def sort_ne(
-    layout: list[list[int]],
-    x: int,
-    y: int,
-    size: int,
-    coord: tuple[int, int],
-    new_sort_spots: list[tuple[int, int]],
+	layout: list[list[int]],
+	x: int,
+	y: int,
+	size: int,
+	coord: tuple[int, int],
+	new_sort_spots: list[tuple[int, int]],
 ) -> bool:
-    # Return True iff a swap occurred
-    # Return True iff a swap occurred
-    current_size = layout[x][y]
+	# Return True iff a swap occurred
+	# Return True iff a swap occurred
+	current_size = layout[x][y]
 
-    if x + 1 < size:
-        east_size = layout[x + 1][y]
-    else:
-        east_size = None
+	if x + 1 < size:
+		east_size = layout[x + 1][y]
+	else:
+		east_size = None
 
-    if y + 1 < size:
-        north_size = layout[x][y + 1]
-    else:
-        north_size = None
+	if y + 1 < size:
+		north_size = layout[x][y + 1]
+	else:
+		north_size = None
 
-    swap_dir = None
-    if east_size != None and current_size > east_size:
-        if north_size != None and east_size > north_size:
-            # N E C swap N
-            swap_dir = North
-        else:
-            # E C N swap E
-            # E N C swap E
-            swap_dir = East
-    elif north_size != None and current_size > north_size:
-        # N C E swap N
-        swap_dir = North
-    # Else:
-    # C N E noop
-    # C E N noop
+	swap_dir = None
+	if east_size != None and current_size > east_size:
+		if north_size != None and east_size > north_size:
+			# N E C swap N
+			swap_dir = North
+		else:
+			# E C N swap E
+			# E N C swap E
+			swap_dir = East
+	elif north_size != None and current_size > north_size:
+		# N C E swap N
+		swap_dir = North
+	# Else:
+	# C N E noop
+	# C E N noop
 
-    if swap_dir == None:
-        return False
+	if swap_dir == None:
+		return False
 
-    swap(swap_dir)
-    if swap_dir == North:
-        new_sort_spots.append((coord[0], coord[1] + 1))
-        swap_contents(layout, x, y + 1, x, y)
-    else:
-        new_sort_spots.append((coord[0] + 1, coord[1]))
-        swap_contents(layout, x + 1, y, x, y)
+	swap(swap_dir)
+	if swap_dir == North:
+		new_sort_spots.append((coord[0], coord[1] + 1))
+		swap_contents(layout, x, y + 1, x, y)
+	else:
+		new_sort_spots.append((coord[0] + 1, coord[1]))
+		swap_contents(layout, x + 1, y, x, y)
 
-    return True
+	return True
 
 
 def sort_sw(
-    layout: list[list[int]],
-    x: int,
-    y: int,
-    coord: tuple[int, int],
-    new_sort_spots: list[tuple[int, int]],
+	layout: list[list[int]],
+	x: int,
+	y: int,
+	coord: tuple[int, int],
+	new_sort_spots: list[tuple[int, int]],
 ):
-    # Return True iff a swap occurred
-    current_size = layout[x][y]
+	# Return True iff a swap occurred
+	current_size = layout[x][y]
 
-    if x > 0:
-        west_size = layout[x - 1][y]
-    else:
-        west_size = None
+	if x > 0:
+		west_size = layout[x - 1][y]
+	else:
+		west_size = None
 
-    if y > 0:
-        south_size = layout[x][y - 1]
-    else:
-        south_size = None
+	if y > 0:
+		south_size = layout[x][y - 1]
+	else:
+		south_size = None
 
-    swap_dir = None
-    if west_size != None and current_size < west_size:
-        if south_size != None and west_size < south_size:
-            swap_dir = South
-        else:
-            swap_dir = West
-    elif south_size != None and current_size < south_size:
-        swap_dir = South
+	swap_dir = None
+	if west_size != None and current_size < west_size:
+		if south_size != None and west_size < south_size:
+			swap_dir = South
+		else:
+			swap_dir = West
+	elif south_size != None and current_size < south_size:
+		swap_dir = South
 
-    if swap_dir == None:
-        return False
+	if swap_dir == None:
+		return False
 
-    swap(swap_dir)
-    if swap_dir == South:
-        new_sort_spots.append((coord[0], coord[1] - 1))
-        swap_contents(layout, x, y - 1, x, y)
-    else:
-        new_sort_spots.append((coord[0] - 1, coord[1]))
-        swap_contents(layout, x - 1, y, x, y)
+	swap(swap_dir)
+	if swap_dir == South:
+		new_sort_spots.append((coord[0], coord[1] - 1))
+		swap_contents(layout, x, y - 1, x, y)
+	else:
+		new_sort_spots.append((coord[0] - 1, coord[1]))
+		swap_contents(layout, x - 1, y, x, y)
 
-    return True
+	return True
 
 
 def sort_cross(layout, x, y, size, coord, new_sort_spots):
-    sort_ne(layout, x, y, size, coord, new_sort_spots)
-    if not sort_sw(layout, x, y, coord, new_sort_spots):
-        return
-    if not sort_ne(layout, x, y, size, coord, new_sort_spots):
-        return
-    if not sort_sw(layout, x, y, coord, new_sort_spots):
-        return
-    sort_ne(layout, x, y, size, coord, new_sort_spots)
+	sort_ne(layout, x, y, size, coord, new_sort_spots)
+	if not sort_sw(layout, x, y, coord, new_sort_spots):
+		return
+	if not sort_ne(layout, x, y, size, coord, new_sort_spots):
+		return
+	if not sort_sw(layout, x, y, coord, new_sort_spots):
+		return
+	sort_ne(layout, x, y, size, coord, new_sort_spots)
 
 
 def cacti_thread(start_x, start_y, size):
-    if size % 2 != 0:
-        print("must be even")
-        do_a_flip()
-        return
-    while True:
-        move_to(start_x, start_y)
-        harvest()
+	if size % 2 != 0:
+		print("must be even")
+		do_a_flip()
+		return
+	while True:
+		move_to(start_x, start_y)
+		harvest()
 
-        layout: list[list[int]] = []
-        for _ in range(size):
-            row = []
-            for _ in range(size):
-                row.append(-1)
-            layout.append(row)
-        sort_spots = []
+		layout: list[list[int]] = []
+		for _ in range(size):
+			row = []
+			for _ in range(size):
+				row.append(-1)
+			layout.append(row)
+		sort_spots = []
 
-        def plant_cactus():
-            if get_entity_type() != Entities.Cactus:
-                if not plant(Entities.Cactus):
-                    till()
-                    plant(Entities.Cactus)
-            sort_spots.append((get_pos_x(), get_pos_y()))
+		def plant_cactus():
+			if get_entity_type() != Entities.Cactus:
+				if not plant(Entities.Cactus):
+					till()
+					plant(Entities.Cactus)
+			sort_spots.append((get_pos_x(), get_pos_y()))
 
-        visit_square(size, plant_cactus)
+		visit_square(size, plant_cactus)
 
-        if size == 6:
+		if size == 6:
 
-            def measure():
-                x = get_pos_x() - start_x
-                y = get_pos_y() - start_y
+			def measure():
+				x = get_pos_x() - start_x
+				y = get_pos_y() - start_y
 
-                layout[x + 1][y] = measure_cactus(East)
-                layout[x][y] = measure_cactus()
-                layout[x - 1][y] = measure_cactus(West)
+				layout[x + 1][y] = measure_cactus(East)
+				layout[x][y] = measure_cactus()
+				layout[x - 1][y] = measure_cactus(West)
 
-            move(East)
-            measure()
-            move(East)
-            move(East)
-            move(East)
+			move(East)
+			measure()
+			move(East)
+			move(East)
+			move(East)
 
-            for _ in range(5):
-                measure()
-                move(North)
-            measure()
-            for _ in range(3):
-                move(West)
-            for _ in range(4):
-                measure()
-                move(South)
-            measure()
-        else:
+			for _ in range(5):
+				measure()
+				move(North)
+			measure()
+			for _ in range(3):
+				move(West)
+			for _ in range(4):
+				measure()
+				move(South)
+			measure()
+		else:
 
-            def analyze():
-                while not can_harvest():
-                    continue
+			def analyze():
+				while not can_harvest():
+					continue
 
-                layout[get_pos_x() - start_x][get_pos_y() - start_y] = measure_cactus()
+				layout[get_pos_x() - start_x][get_pos_y() - start_y] = measure_cactus()
 
-            visit_square(size, analyze)
+			visit_square(size, analyze)
 
-        while len(sort_spots) > 0:
-            # Weird concurrent modification stuff, just reconstruct the list each time
-            new_sort_spots = []
-            visited = set()
-            for spot in sort_spots:
-                if spot in visited:
-                    continue
-                visited.add(spot)
-                x = spot[0] - start_x
-                y = spot[1] - start_y
+		while len(sort_spots) > 0:
+			# Weird concurrent modification stuff, just reconstruct the list each time
+			new_sort_spots = []
+			visited = set()
+			for spot in sort_spots:
+				if spot in visited:
+					continue
+				visited.add(spot)
+				x = spot[0] - start_x
+				y = spot[1] - start_y
 
-                current_size = layout[x][y]
-                needs_sort = (
-                    (x + 1 < size and layout[x + 1][y] < current_size)
-                    or (x > 0 and layout[x - 1][y] > current_size)
-                    or (y + 1 < size and layout[x][y + 1] < current_size)
-                    or (y > 0 and layout[x][y - 1] > current_size)
-                )
+				current_size = layout[x][y]
+				needs_sort = (
+					(x + 1 < size and layout[x + 1][y] < current_size)
+					or (x > 0 and layout[x - 1][y] > current_size)
+					or (y + 1 < size and layout[x][y + 1] < current_size)
+					or (y > 0 and layout[x][y - 1] > current_size)
+				)
 
-                if not needs_sort:
-                    continue
+				if not needs_sort:
+					continue
 
-                move_to(spot[0], spot[1])
+				move_to(spot[0], spot[1])
 
-                sort_cross(layout, x, y, size, spot, new_sort_spots)
+				sort_cross(layout, x, y, size, spot, new_sort_spots)
 
-            sort_spots = new_sort_spots
+			sort_spots = new_sort_spots
 
 
 def cocktail_shaker(dir: Direction, x, y, size):
-    move_to(x, y)
-    opp = opposite(dir)
-    # From this index upward is sorted
-    top_sorted = size - 1
-    # From this index downward is sorted
-    bottom_sorted = 0
-    position = 0
-    min_pos = 1
-    max_pos = size - 2
+	move_to(x, y)
+	opp = opposite(dir)
+	# From this index upward is sorted
+	top_sorted = size - 1
+	# From this index downward is sorted
+	bottom_sorted = 0
+	position = 0
+	min_pos = 1
+	max_pos = size - 2
 
-    forwards = True
-    did_swap = False
-    while top_sorted > bottom_sorted:
-        did_swap_now = False
-        if forwards:
-            if measure_cactus() > measure_cactus(dir):
-                swap(dir)
-                did_swap = True
-                did_swap_now = True
-            elif not did_swap and position > bottom_sorted:
-                bottom_sorted = position
+	forwards = True
+	did_swap = False
+	while top_sorted > bottom_sorted:
+		did_swap_now = False
+		if forwards:
+			if measure_cactus() > measure_cactus(dir):
+				swap(dir)
+				did_swap = True
+				did_swap_now = True
+			elif not did_swap and position > bottom_sorted:
+				bottom_sorted = position
 
-            if position == max_pos or (position >= top_sorted - 1 and not did_swap_now):
-                did_swap = False
-                forwards = False
-                max_pos -= 1
-            else:
-                move(dir)
-                position += 1
-        else:
-            if measure_cactus() < measure_cactus(opp):
-                swap(opp)
-                did_swap = True
-                did_swap_now = True
-            elif not did_swap and position < top_sorted:
-                top_sorted = position
+			if position == max_pos or (position >= top_sorted - 1 and not did_swap_now):
+				did_swap = False
+				forwards = False
+				max_pos -= 1
+			else:
+				move(dir)
+				position += 1
+		else:
+			if measure_cactus() < measure_cactus(opp):
+				swap(opp)
+				did_swap = True
+				did_swap_now = True
+			elif not did_swap and position < top_sorted:
+				top_sorted = position
 
-            if position == min_pos or (
-                position <= bottom_sorted + 1 and not did_swap_now
-            ):
-                did_swap = False
-                forwards = True
-                min_pos += 1
-            else:
-                move(opp)
-                position -= 1
+			if position == min_pos or (
+				position <= bottom_sorted + 1 and not did_swap_now
+			):
+				did_swap = False
+				forwards = True
+				min_pos += 1
+			else:
+				move(opp)
+				position -= 1
 
 
 def mega_plant(x, y, size, bootstrap):
-    move_to(x, y)
-    for _ in range(size):
-        if bootstrap:
-            till()
-        plant(Entities.Cactus)
-        move(North)
+	move_to(x, y)
+	for _ in range(size):
+		if bootstrap:
+			till()
+		plant(Entities.Cactus)
+		move(North)
 
-    move_to(x, y)  # noop if size == get_world_size()
+	move_to(x, y)  # noop if size == get_world_size()
 
-    cocktail_shaker(North, x, y, size)
+	cocktail_shaker(North, x, y, size)
 
 
 def mega_cactus(stop_condition, size=None):
-    # 32 x 32 cactus!
-    if size == None:
-        size = get_world_size()
+	# 32 x 32 cactus!
+	if size == None:
+		size = get_world_size()
 
-    bootstrap = True
-    while not stop_condition():
-        start = get_time()
+	bootstrap = True
+	while not stop_condition():
+		start = get_time()
 
-        drones = []
-        for i in range(size - 1):
-            drones.append(spawn_drone(mega_plant, i + 1, 0, size, bootstrap))
-        mega_plant(0, 0, size, bootstrap)
+		drones = []
+		for i in range(size - 1):
+			drones.append(spawn_drone(mega_plant, i + 1, 0, size, bootstrap))
+		mega_plant(0, 0, size, bootstrap)
 
-        for drone in drones:
-            wait_for(drone)
+		for drone in drones:
+			wait_for(drone)
 
-        for i in range(size - 1):
-            drones.append(spawn_drone(cocktail_shaker, East, 0, i + 1, size))
+		for i in range(size - 1):
+			drones.append(spawn_drone(cocktail_shaker, East, 0, i + 1, size))
 
-        cocktail_shaker(East, 0, 0, size)
+		cocktail_shaker(East, 0, 0, size)
 
-        for drone in drones:
-            wait_for(drone)
+		for drone in drones:
+			wait_for(drone)
 
-        harvest()
+		harvest()
 
-        end = get_time()
+		end = get_time()
 
-        quick_print("duration: ", (end - start))
+		quick_print("duration: ", (end - start))
 
-        bootstrap = False
+		bootstrap = False
 
 
 if __name__ == "__main__":
-    clear()
+	clear()
 
-    def never():
-        return False
+	def never():
+		return False
 
-    mega_cactus(never)
+	mega_cactus(never)
