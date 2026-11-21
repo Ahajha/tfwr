@@ -10,9 +10,7 @@ def assert_(condition):
         pass
 
 
-def setup_mushroom(size) -> list[list[tuple[int | None, int]]]:
-    jump(Unlocks.Mushrooms)
-
+def setup_mushroom(start_x, start_y, size) -> list[list[tuple[int | None, int]]]:
     # Grid of (measure, height)
     info: list[list[tuple[int | None, int]]] = []
     for _ in range(size):
@@ -24,17 +22,21 @@ def setup_mushroom(size) -> list[list[tuple[int | None, int]]]:
     def measure_mushroom_action():
         while get_ground_type() != Grounds.Mushroom:
             dig()
-        info[get_pos_x()][get_pos_y()] = (measure_mushroom(), get_pos_z())
+        info[get_pos_x() - start_x][get_pos_y() - start_y] = (
+            measure_mushroom(),
+            get_pos_z(),
+        )
 
+    move_to(start_x, start_y)
     visit_square(size, measure_mushroom_action)
 
-    move_to(size // 2, size // 2)
+    move_to(start_x + size // 2, start_y + size // 2)
     dig()
     info[size // 2][size // 2] = (measure_mushroom(), get_pos_z())
     return info
 
 
-def semirandom_mushroom(info, size, target):
+def semirandom_mushroom(info, start_x, start_y, size, target):
     # This starts a mushroom layer off with some randomness, since it's pretty
     # easy to get stuck in the initial few 'shrooms without some randomness.
 
@@ -56,7 +58,7 @@ def semirandom_mushroom(info, size, target):
         if mtype_src != mtype_dst:
             return 1
 
-        move_to(src_x, src_y)
+        move_to(src_x + start_x, src_y + start_y)
         assert_(push(dir))
         info[src_x][src_y] = (measure_mushroom(), get_pos_z())
         assert_(move(dir))
@@ -112,7 +114,7 @@ def semirandom_mushroom(info, size, target):
                 (random() * len(candidate_random_dirs)) // 1
             ]
             if rand_dir == East:
-                move_to(x + 1, y)
+                move_to(start_x + x + 1, start_y + y)
                 assert_(push(West))
                 info[x + 1][y] = (measure_mushroom(), get_pos_z())
                 assert_(move(West))
@@ -120,7 +122,7 @@ def semirandom_mushroom(info, size, target):
                 new_to_visit.add((x + 1, y))
                 new_to_visit.add((x, y))
             if rand_dir == West:
-                move_to(x - 1, y)
+                move_to(start_x + x - 1, start_y + y)
                 assert_(push(East))
                 info[x - 1][y] = (measure_mushroom(), get_pos_z())
                 assert_(move(East))
@@ -128,7 +130,7 @@ def semirandom_mushroom(info, size, target):
                 new_to_visit.add((x - 1, y))
                 new_to_visit.add((x, y))
             if rand_dir == North:
-                move_to(x, y + 1)
+                move_to(start_x + x, start_y + y + 1)
                 assert_(push(South))
                 info[x][y + 1] = (measure_mushroom(), get_pos_z())
                 assert_(move(South))
@@ -136,7 +138,7 @@ def semirandom_mushroom(info, size, target):
                 new_to_visit.add((x, y + 1))
                 new_to_visit.add((x, y))
             if rand_dir == South:
-                move_to(x, y - 1)
+                move_to(start_x + x, start_y + y - 1)
                 assert_(push(North))
                 info[x][y - 1] = (measure_mushroom(), get_pos_z())
                 assert_(move(North))
@@ -173,6 +175,8 @@ def is_in_range(dir: Direction, x, y, size) -> bool:
 
 
 def lower_mushroom(
+    start_x: int,
+    start_y: int,
     size: int,
     mushroom_type: int,
     info: list[list[tuple[int | None, int]]],
@@ -196,7 +200,7 @@ def lower_mushroom(
                 if mtype != None:
                     continue
                 opp = opposite(dir)
-                move_to(x_mod, y_mod)
+                move_to(start_x + x_mod, start_y + y_mod)
                 assert_(measure() == None)
                 dig()
                 assert_(measure() == None)
@@ -215,10 +219,9 @@ def lower_mushroom(
                 return
 
 
-def a_star_mushroom():
-    size = get_world_size()
-    info = setup_mushroom(size)
-    semirandom_mushroom(info, size, 5)
+def mushroom(start_x, start_y, size):
+    info = setup_mushroom(start_x, start_y, size)
+    semirandom_mushroom(info, start_x, start_y, size, 5)
 
     while True:
         quick_print("starting the loop")
@@ -237,7 +240,9 @@ def a_star_mushroom():
         if min_layer != None:
             for mushroom_type in range(0, 6):
                 if not has_mtypes[mushroom_type]:
-                    lower_mushroom(size, mushroom_type, info, min_layer)
+                    lower_mushroom(
+                        start_x, start_y, size, mushroom_type, info, min_layer
+                    )
 
         for i in range(size):
             for j in range(size):
@@ -279,7 +284,7 @@ def a_star_mushroom():
                 if destination == None:
                     continue
 
-                move_to(i, j)
+                move_to(i + start_x, j + start_y)
 
                 steps: list[Direction] = []
                 current = destination
@@ -292,8 +297,11 @@ def a_star_mushroom():
 
                 # Only the first and last spots need to update their info
                 assert_(push(steps[-1]))
-                quick_print(info[get_pos_x()][get_pos_y()])
-                info[get_pos_x()][get_pos_y()] = (measure_mushroom(), get_pos_z())
+                quick_print(info[get_pos_x() - start_x][get_pos_y() - start_y])
+                info[get_pos_x() - start_x][get_pos_y() - start_y] = (
+                    measure_mushroom(),
+                    get_pos_z(),
+                )
                 assert_(move(steps[-1]))
 
                 for idx in range(len(steps) - 1):
@@ -301,19 +309,29 @@ def a_star_mushroom():
                     if idx != len(steps) - 2:
                         assert_(measure(dir) != target)
                     assert_(push(dir))
-                    assert_(info[get_pos_x()][get_pos_y()][1] == get_pos_z())
+                    assert_(
+                        info[get_pos_x() - start_x][get_pos_y() - start_y][1]
+                        == get_pos_z()
+                    )
                     assert_(move(dir))
 
                 if get_ground_type() != Grounds.Mushroom:
                     quick_print(get_pos_z())
                     place(Grounds.Dirt)
-                    info[get_pos_x()][get_pos_y()] = (None, get_pos_z())
+                    info[get_pos_x() - start_x][get_pos_y() - start_y] = (
+                        None,
+                        get_pos_z(),
+                    )
 
                 else:
-                    info[get_pos_x()][get_pos_y()] = (measure_mushroom(), get_pos_z())
+                    info[get_pos_x() - start_x][get_pos_y() - start_y] = (
+                        measure_mushroom(),
+                        get_pos_z(),
+                    )
 
 
 if __name__ == "__main__":
     clear()
     set_world_size(16)
-    a_star_mushroom()
+    jump(Unlocks.Mushrooms)
+    mushroom(4, 4, 8)
