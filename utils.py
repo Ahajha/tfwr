@@ -39,7 +39,7 @@ def opposite(dir):
 
 
 def visit_rectangle(size_x, size_y, action):
-    # Visits every spot in a rectange and applies an action.
+    # Visits every spot in a rectangle and applies an action.
     # Goes in this order (6x6 for example):
     #
     # v<<<<<
