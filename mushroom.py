@@ -148,50 +148,6 @@ def semirandom_mushroom(info, size, target):
         new_to_visit = set()
 
 
-def can_push_east(x, y, size, info, is_src_origin) -> bool:
-    if x == size - 1:
-        return False
-    src_z = info[x][y][1]
-    dst_z = info[x + 1][y][1]
-    if is_src_origin:
-        return src_z > dst_z
-    else:
-        return src_z >= dst_z
-
-
-def can_push_west(x, y, info, is_src_origin) -> bool:
-    if x == 0:
-        return False
-    src_z = info[x][y][1]
-    dst_z = info[x - 1][y][1]
-    if is_src_origin:
-        return src_z > dst_z
-    else:
-        return src_z >= dst_z
-
-
-def can_push_north(x, y, size, info, is_src_origin) -> bool:
-    if y == size - 1:
-        return False
-    src_z = info[x][y][1]
-    dst_z = info[x][y + 1][1]
-    if is_src_origin:
-        return src_z > dst_z
-    else:
-        return src_z >= dst_z
-
-
-def can_push_south(x, y, info, is_src_origin) -> bool:
-    if y == 0:
-        return False
-    src_z = info[x][y][1]
-    dst_z = info[x][y - 1][1]
-    if is_src_origin:
-        return src_z > dst_z
-    else:
-        return src_z >= dst_z
-
-
 # Maintain a list of mushrooms on the bottom level
 #    - Then we can do proper A* to them
 # If there isn't a mushroom of a certain kind at that level, make one by digging and pushing
@@ -295,52 +251,27 @@ def a_star_mushroom():
                 while destination == None and to_visit:
                     for x, y in to_visit:
                         is_src_origin = (x, y) == (i, j)
-                        if (
-                            can_push_east(x, y, size, info, is_src_origin)
-                            and (x + 1, y) not in from_origin
-                        ):
-                            from_origin[(x + 1, y)] = East
-                            new_to_visit.append((x + 1, y))
+                        for dir in DIRS:
+                            if not is_in_range(dir, x, y, size):
+                                continue
+                            x_offset, y_offset = DIR_TO_OFFSETS[dir]
+                            src_z = info[x][y][1]
+                            dist_type, dst_z = info[x + x_offset][y + y_offset]
+                            if is_src_origin:
+                                if src_z <= dst_z:
+                                    continue
+                            else:
+                                if src_z < dst_z:
+                                    continue
+                            dst = (x + x_offset, y + y_offset)
+                            if dst in from_origin:
+                                continue
+                            from_origin[dst] = dir
+                            new_to_visit.append(dst)
 
-                            if info[x + 1][y][0] == target:
+                            if dist_type == target:
                                 # Done!
-                                destination = (x + 1, y)
-                                break
-
-                        if (
-                            can_push_west(x, y, info, is_src_origin)
-                            and (x - 1, y) not in from_origin
-                        ):
-                            from_origin[(x - 1, y)] = West
-                            new_to_visit.append((x - 1, y))
-
-                            if info[x - 1][y][0] == target:
-                                # Done!
-                                destination = (x - 1, y)
-                                break
-
-                        if (
-                            can_push_north(x, y, size, info, is_src_origin)
-                            and (x, y + 1) not in from_origin
-                        ):
-                            from_origin[(x, y + 1)] = North
-                            new_to_visit.append((x, y + 1))
-
-                            if info[x][y + 1][0] == target:
-                                # Done!
-                                destination = (x, y + 1)
-                                break
-
-                        if (
-                            can_push_south(x, y, info, is_src_origin)
-                            and (x, y - 1) not in from_origin
-                        ):
-                            from_origin[(x, y - 1)] = South
-                            new_to_visit.append((x, y - 1))
-
-                            if info[x][y - 1][0] == target:
-                                # Done!
-                                destination = (x, y - 1)
+                                destination = dst
                                 break
 
                     to_visit = new_to_visit
@@ -353,17 +284,11 @@ def a_star_mushroom():
                 steps: list[Direction] = []
                 current = destination
                 while current != (i, j):
-                    dir = from_origin[current]
+                    dir: Direction = from_origin[current]  # type: ignore
                     assert_(dir != None)
-                    steps.append(dir)  # type: ignore
-                    if dir == North:
-                        current = (current[0], current[1] - 1)
-                    elif dir == South:
-                        current = (current[0], current[1] + 1)
-                    elif dir == East:
-                        current = (current[0] - 1, current[1])
-                    else:
-                        current = (current[0] + 1, current[1])
+                    steps.append(dir)
+                    x_offset, y_offset = DIR_TO_OFFSETS[dir]
+                    current = (current[0] - x_offset, current[1] - y_offset)
 
                 # Only the first and last spots need to update their info
                 assert_(push(steps[-1]))
