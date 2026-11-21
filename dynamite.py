@@ -11,71 +11,165 @@ def dig_to_dynamite(x, y, size_x, size_y):
     visit_rectangle(size_x, size_y, dig_to_dynamite_action)
 
 
-def count_adjacent(x, y, size, info) -> tuple[int, int]:
-    adj_dynamite = 0
-    adj_unknown = 0
-    for x_offset in (-1, 0, 1):
-        if x + x_offset >= size:
-            continue
-        if x + x_offset < 0:
-            continue
-        for y_offset in (-1, 0, 1):
-            if y + y_offset >= size:
-                continue
-            if y + y_offset < 0:
-                continue
-            if x_offset == 0 and y_offset == 0:
-                continue
-            if info[x + x_offset][y + y_offset] == None:
-                adj_unknown += 1
-            elif info[x + x_offset][y + y_offset] == DYNAMITE:
-                adj_dynamite += 1
-    return adj_dynamite, adj_unknown
+def measure_soot() -> int | None:
+    return measure()  # type: ignore
 
 
 DYNAMITE = 9
 
 
-def mark_unknown_neighbors_as_dynamite(x, y, size, info):
-    for x_offset in (-1, 0, 1):
-        if x + x_offset >= size:
-            continue
-        if x + x_offset < 0:
-            continue
-        for y_offset in (-1, 0, 1):
-            if y + y_offset >= size:
-                continue
-            if y + y_offset < 0:
-                continue
-            if x_offset == 0 and y_offset == 0:
-                continue
-            if info[x + x_offset][y + y_offset] == None:
-                info[x + x_offset][y + y_offset] = DYNAMITE
+def get_neighbors(
+    x: int,
+    y: int,
+    size: int,
+) -> set[tuple[int, int]]:
+    neighbors = set()
+    can_go_east = x + 1 < size
+    can_go_north = y + 1 < size
+    can_go_west = x > 0
+    can_go_south = y > 0
+    if can_go_east:
+        if can_go_north:
+            neighbors.add((x + 1, y + 1))
+        neighbors.add((x + 1, y))
+        if can_go_south:
+            neighbors.add((x + 1, y - 1))
+    if can_go_north:
+        neighbors.add((x, y + 1))
+    if can_go_south:
+        neighbors.add((x, y - 1))
+    if can_go_west:
+        if can_go_north:
+            neighbors.add((x - 1, y + 1))
+        neighbors.add((x - 1, y))
+        if can_go_south:
+            neighbors.add((x - 1, y - 1))
+    return neighbors
 
 
-def dig_unknown_neighbors(x, y, size, info, to_resolve) -> bool:
-    for x_offset in (-1, 0, 1):
-        if x + x_offset >= size:
-            continue
-        if x + x_offset < 0:
-            continue
-        for y_offset in (-1, 0, 1):
-            if y + y_offset >= size:
-                continue
-            if y + y_offset < 0:
-                continue
-            if x_offset == 0 and y_offset == 0:
-                continue
-            if info[x + x_offset][y + y_offset] == None:
-                move_to(x + x_offset, y + y_offset)
+def analyze_cell(
+    x: int,
+    y: int,
+    size: int,
+    info: list[list[int | None]],
+    to_resolve: list[tuple[int, int]],
+    defer: list[tuple[int, int]],
+    xor_groups: dict[tuple[int, int], set[tuple[int, int]]],
+) -> int:
+    # Analyzes and potentially makes progress on a cell.
+    # Returns true if progress was made.
+
+    # For each disjoint XOR pair surrounding a cell,
+    # we ignore the pair and remove one from the hint.
+    neighbors = get_neighbors(x, y, size)
+    made_progress = False
+
+    excluded = set()
+    for neighbor in neighbors:
+        if neighbor in xor_groups and neighbor not in excluded:
+            # Get just the first item from the set. Single iteration loop
+            # If the set is empty it's a noop anyways.
+            # Maybe TODO: If there are multiple pairs, we can interpret different ways.
+            for xor in xor_groups[neighbor]:
+                # We only care about the xors that are neighbors and that we haven't already excluded
+                if xor in excluded:
+                    continue
+                if xor not in neighbors:
+                    continue
+                # made_progress = True # ???
+                excluded.add(xor)
+                excluded.add(neighbor)
+                break
+
+    if len(excluded) % 2 != 0:
+        [][0]
+
+    if info[x][y] == DYNAMITE:
+        move_to(x, y)
+        return True
+
+    remaining_dynamite: int = info[x][y] - len(excluded) // 2  # type: ignore
+    for exclude in excluded:
+        if exclude in neighbors:
+            neighbors.remove(exclude)
+
+    adj_unknowns = []
+    for i, j in neighbors:
+        if info[i][j] == None:
+            adj_unknowns.append((i, j))
+        elif info[i][j] == DYNAMITE:
+            remaining_dynamite -= 1
+
+    # If the # of unknowns == remaining_dynamite, mark all unknowns as dynamite
+    if len(adj_unknowns) == remaining_dynamite:
+        for i, j in adj_unknowns:
+            info[i][j] = DYNAMITE
+
+            neighbor = (i, j)
+            to_resolve.append(neighbor)
+
+            # Remove any xor groups this was in.
+            # They'll get auto-resolved in the next pass
+            if neighbor in xor_groups:
+                for item in xor_groups.pop(neighbor):
+                    xor_groups[item].remove(neighbor)
+        return True
+
+    # If remaining_dynamite == 0, dig the rest
+    elif remaining_dynamite == 0:
+        for i, j in adj_unknowns:
+            move_to(i, j)
+
+            if info[x][y] == 0:
                 dig()
-                to_resolve.append((get_pos_x(), get_pos_y()))
-                measure_result = measure()
-                if measure_result == None:
-                    return True
-                info[get_pos_x()][get_pos_y()] = measure_result
+            else:
+                # I only want a breakpoint here
+                dig()
+            measure_result = measure_soot()
+            if measure_result == None:
+                return True
+            info[i][j] = measure_result
 
-    return False
+            neighbor = (i, j)
+            to_resolve.append((i, j))
+
+            # Remove any xor groups this was in.
+            # They'll get auto-resolved in the next pass
+            if neighbor in xor_groups:
+                for item in xor_groups.pop(neighbor):
+                    xor_groups[item].remove(neighbor)
+        return True
+
+    # If we're short one, add an XOR group
+    elif len(adj_unknowns) == 2:
+        if remaining_dynamite != 1:
+            # I think this is a precondition
+            [][0]
+        defer.append((x, y))
+
+        n1 = adj_unknowns[0]
+        n2 = adj_unknowns[1]
+        if n1 in xor_groups:
+            if n2 not in xor_groups[n1]:
+                made_progress = True
+                xor_groups[n1].add(n2)
+        else:
+            made_progress = True
+            xor_groups[n1] = set([n2])
+
+        if n2 in xor_groups:
+            if n1 not in xor_groups[n2]:
+                made_progress = True
+                xor_groups[n2].add(n1)
+        else:
+            made_progress = True
+            xor_groups[n2] = set([n1])
+
+    # Otherwise, not enough information, defer
+    else:
+        defer.append((x, y))
+
+    return made_progress
 
 
 def find_any_unknown(info, size) -> tuple[int, int]:
@@ -112,6 +206,9 @@ def dynamite():
             row.append(None)
         info.append(row)
 
+    # Map from any cell to any cells that are dynamite XOR the other isn't
+    xor_groups: dict[tuple[int, int], set[tuple[int, int]]] = {}
+
     info[get_pos_x()][get_pos_y()] = measure()  # type: ignore
 
     to_resolve = [(get_pos_x(), get_pos_y())]
@@ -122,17 +219,9 @@ def dynamite():
         defer = []
         while to_resolve:
             x, y = to_resolve.pop()
-            adj_dynamite, adj_unknown = count_adjacent(x, y, size, info)
-            hint: int = info[x][y]  # type: ignore
-            # If the # of dynamites + # of unknowns == the hint, mark all unknowns as dynamite
-            if adj_dynamite + adj_unknown == hint:
-                mark_unknown_neighbors_as_dynamite(x, y, size, info)
+            if analyze_cell(x, y, size, info, to_resolve, defer, xor_groups):
                 made_progress = True
-
-            # If hint == # of dynamites, dig the rest
-            elif hint == adj_dynamite:
-                made_progress = True
-                if dig_unknown_neighbors(x, y, size, info, to_resolve):
+                if measure_soot() == None:
                     return
 
             # Otherwise, not enough information, defer
