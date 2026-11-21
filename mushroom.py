@@ -1,4 +1,4 @@
-from utils import move_to, visit_square
+from utils import move_to, opposite, visit_square
 
 
 def measure_mushroom() -> int | None:
@@ -196,127 +196,73 @@ def can_push_south(x, y, info, is_src_origin) -> bool:
 #    - Then we can do proper A* to them
 # If there isn't a mushroom of a certain kind at that level, make one by digging and pushing
 
+DIRS = [North, East, South, West]
+
+DIR_TO_OFFSETS = {
+    North: (0, 1),
+    East: (1, 0),
+    South: (0, -1),
+    West: (-1, 0),
+}
+
+
+def is_in_range(dir: Direction, x, y, size) -> bool:
+    if dir == North:
+        return y + 1 < size
+    if dir == East:
+        return x + 1 < size
+    if dir == South:
+        return y > 0
+    return x > 0
+
 
 def lower_mushroom(
     size: int,
     mushroom_type: int,
     info: list[list[tuple[int | None, int]]],
     min_layer: int,
-    min_layer_elements: dict[int, set[tuple[int, int]]],
 ):
     # Looks for a mushroom of a certain kind that can be lowered
     # onto the ground level.
-    done = False
-    for i in range(size):
-        for j in range(size):
-            if info[i][j][0] != mushroom_type:
+    for x in range(size):
+        for y in range(size):
+            if info[x][y][0] != mushroom_type:
                 continue
-            if info[i][j][1] == min_layer:
+            if info[x][y][1] == min_layer:
                 continue
-            if i + 1 < size and info[i + 1][j][0] == None:
-                move_to(i + 1, j)
+            for dir in DIRS:
+                if not is_in_range(dir, x, y, size):
+                    continue
+                x_offset, y_offset = DIR_TO_OFFSETS[dir]
+                x_mod = x + x_offset
+                y_mod = y + y_offset
+                mtype, z_mod = info[x_mod][y_mod]
+                if mtype != None:
+                    continue
+                opp = opposite(dir)
+                move_to(x_mod, y_mod)
+                assert_(measure() == None)
                 dig()
-                move(West)
-                assert_(push(East))
-                mtype = measure_mushroom()
-                if mtype == None:
-                    [][0]
-                    return
-                if info[i + 1][j][1] != min_layer:
-                    [][0]
-                    return
-                # We should NOT need to be this verbose
-                info[get_pos_x()][get_pos_y()] = (measure_mushroom(), get_pos_z())
-                if get_pos_z() == min_layer:
-                    min_layer_elements[measure_mushroom()].add(  # type: ignore
-                        (get_pos_x(), get_pos_y())
-                    )
-                move(East)
-                info[get_pos_x()][get_pos_y()] = (measure_mushroom(), get_pos_z())
-                if get_pos_z() == min_layer:
-                    min_layer_elements[measure_mushroom()].add(  # type: ignore
-                        (get_pos_x(), get_pos_y())
-                    )
-                done = True
-                break
-            if done:
-                break
-            # if i > 0 and info[i - 1][j][0] == None:
-            #    move_to(i - 1, j)
-            #    dig()
-            #    move(East)
-            #    force_push(West)
-            #    mtype = measure_mushroom()
-            #    if mtype == None:
-            #        [][0]
-            #        return
-            #    if info[i - 1][j][1] != min_layer:
-            #        [][0]
-            #        return
-            #    info[get_pos_x()][get_pos_y()] = (measure_mushroom(), get_pos_z())
-            #    move(West)
-            #    info[get_pos_x()][get_pos_y()] = (measure_mushroom(), get_pos_z())
-            #    move(East)
-            #    min_layer_elements[mushroom_type].add((i - 1, j))
-            #    if get_pos_z() == min_layer:
-            #        min_layer_elements[mtype].add((i, j))
-            #    return
-            # if j + 1 < size and info[i][j + 1][0] == None:
-            #    move_to(i, j + 1)
-            #    dig()
-            #    move(South)
-            #    force_push(North)
-            #    mtype = measure_mushroom()
-            #    if mtype == None:
-            #        [][0]
-            #        return
-            #    if info[i][j + 1][1] != min_layer:
-            #        [][0]
-            #        return
-            #    info[get_pos_x()][get_pos_y()] = (measure_mushroom(), get_pos_z())
-            #    move(North)
-            #    info[get_pos_x()][get_pos_y()] = (measure_mushroom(), get_pos_z())
-            #    move(South)
-            #    min_layer_elements[mushroom_type].add((i, j + 1))
-            #    if get_pos_z() == min_layer:
-            #        min_layer_elements[mtype].add((i, j))
-            #    return
-            # if j > 0 and info[i][j - 1][0] == None:
-            #    move_to(i, j - 1)
-            #    dig()
-            #    move(North)
-            #    force_push(South)
-            #    mtype = measure_mushroom()
-            #    if mtype == None:
-            #        [][0]
-            #        return
-            #    if info[i][j - 1][1] != min_layer:
-            #        [][0]
-            #        return
-            #    info[get_pos_x()][get_pos_y()] = (measure_mushroom(), get_pos_z())
-            #    move(South)
-            #    info[get_pos_x()][get_pos_y()] = (measure_mushroom(), get_pos_z())
-            #    move(North)
-            #    min_layer_elements[mushroom_type].add((i, j - 1))
-            #    if get_pos_z() == min_layer:
-            #        min_layer_elements[mtype].add((i, j))
-            #    return
+                assert_(measure() == None)
+                move(opp)
+                assert_(push(dir))
+                assert_(info[x_mod][y_mod][1] == min_layer)
+                info[x_mod][y_mod] = (  # type: ignore
+                    measure(dir),
+                    get_pos_z(dir),
+                )
+                move(dir)
+                info[x][y] = (  # type: ignore
+                    measure(opp),
+                    get_pos_z(opp),
+                )
+                return
 
 
 def a_star_mushroom():
     size = get_world_size()
     info = setup_mushroom(size)
     semirandom_mushroom(info, size, 5)
-
-    min_layer: int | None = None  # Don't know yet
-    min_layer_elements: dict[int, set[tuple[int, int]]] = {
-        0: set(),
-        1: set(),
-        2: set(),
-        3: set(),
-        4: set(),
-        5: set(),
-    }  # Also don't know yet
 
     while True:
         quick_print("starting the loop")
@@ -334,60 +280,8 @@ def a_star_mushroom():
 
         if min_layer != None:
             for mushroom_type in range(0, 6):
-                # if len(min_layer_elements[mushroom_type]) == 0:
                 if not has_mtypes[mushroom_type]:
-                    done = False
-                    for i in range(size):
-                        for j in range(size):
-                            if info[i][j][0] != mushroom_type:
-                                continue
-                            if info[i][j][1] == min_layer:
-                                continue
-                            if i + 1 < size and info[i + 1][j][0] == None:
-                                quick_print("pushing", i, j, "to", i + 1, j)
-                                move_to(i + 1, j)
-                                assert_(measure() == None)
-                                dig()
-                                assert_(measure() == None)
-                                move(West)
-                                assert_(push(East))
-                                # mtype = measure_mushroom()
-                                # How?
-                                # assert_(mtype != None)
-                                assert_(info[i + 1][j][1] == min_layer)
-                                # We should NOT need to be this verbose
-                                info[i + 1][j] = (  # type: ignore
-                                    measure(East),
-                                    get_pos_z(East),
-                                )
-                                # if (
-                                #    get_pos_z(East) == min_layer
-                                #    and measure(East) != None
-                                # ):
-                                #    min_layer_elements[measure(East)].add(  # type: ignore
-                                #        (i + 1, j)
-                                #    )
-                                move(East)
-                                info[i][j] = (  # type: ignore
-                                    measure(West),
-                                    get_pos_z(West),
-                                )
-                                # if (
-                                #    get_pos_z(West) == min_layer
-                                #    and measure(West) != None
-                                # ):
-                                #    min_layer_elements[measure(West)].add(  # type: ignore
-                                #        (i, j)
-                                #    )
-                                done = True
-                                break
-                        if done:
-                            break
-                # Temp sanity check
-                # for i, j in min_layer_elements[mushroom_type]:
-                #     mtype, z = info[i][j]
-                #     assert_(mtype == mushroom_type)
-                #     assert_(z == min_layer)
+                    lower_mushroom(size, mushroom_type, info, min_layer)
 
         for i in range(size):
             for j in range(size):
@@ -476,10 +370,6 @@ def a_star_mushroom():
                 quick_print(info[get_pos_x()][get_pos_y()])
                 info[get_pos_x()][get_pos_y()] = (measure_mushroom(), get_pos_z())
                 assert_(move(steps[-1]))
-                # if min_layer == get_pos_z():
-                #    mtype = measure_mushroom()
-                #    if mtype != None:
-                #        min_layer_elements[mtype].add((get_pos_x(), get_pos_y()))
 
                 for idx in range(len(steps) - 1):
                     dir = steps[len(steps) - idx - 2]
@@ -493,28 +383,9 @@ def a_star_mushroom():
                     quick_print(get_pos_z())
                     place(Grounds.Dirt)
                     info[get_pos_x()][get_pos_y()] = (None, get_pos_z())
-                    # if min_layer == None:
-                    #    min_layer = get_pos_z()
-                    #    for a in range(size):
-                    #        for b in range(size):
-                    #            ab_type, ab_z = info[a][b]
-                    #            if ab_type == None:
-                    #                continue
-                    #            if ab_z == min_layer:
-                    #                min_layer_elements[ab_type].add((a, b))
-                    # else:
-                    #    # TODO: This should be unconditional, but it's _relatively_ harmless for now
-                    #    elem = (get_pos_x(), get_pos_y())
-                    #    if elem in min_layer_elements[target]:
-                    #        min_layer_elements[target].remove(
-                    #            (get_pos_x(), get_pos_y())
-                    #        )
+
                 else:
                     info[get_pos_x()][get_pos_y()] = (measure_mushroom(), get_pos_z())
-                    # if min_layer == get_pos_z():
-                    #    mtype = measure_mushroom()
-                    #    if mtype != None:
-                    #        min_layer_elements[mtype].add((get_pos_x(), get_pos_y()))
 
 
 if __name__ == "__main__":
