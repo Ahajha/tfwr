@@ -53,7 +53,7 @@ def mark_unknown_neighbors_as_dynamite(x, y, size, info):
                 info[x + x_offset][y + y_offset] = DYNAMITE
 
 
-def dig_unknown_neighbors(x, y, size, info, new_to_resolve):
+def dig_unknown_neighbors(x, y, size, info, to_resolve) -> bool:
     for x_offset in (-1, 0, 1):
         if x + x_offset >= size:
             continue
@@ -69,8 +69,13 @@ def dig_unknown_neighbors(x, y, size, info, new_to_resolve):
             if info[x + x_offset][y + y_offset] == None:
                 move_to(x + x_offset, y + y_offset)
                 dig()
-                new_to_resolve.add((get_pos_x(), get_pos_y()))
-                info[get_pos_x()][get_pos_y()] = measure()
+                to_resolve.append((get_pos_x(), get_pos_y()))
+                measure_result = measure()
+                if measure_result == None:
+                    return True
+                info[get_pos_x()][get_pos_y()] = measure_result
+
+    return False
 
 
 def dynamite():
@@ -99,12 +104,13 @@ def dynamite():
 
     info[get_pos_x()][get_pos_y()] = measure()  # type: ignore
 
-    to_resolve = set([(get_pos_x(), get_pos_y())])
+    to_resolve = [(get_pos_x(), get_pos_y())]
 
     while to_resolve:
         # Concurrent modification nonsense
-        new_to_resolve = set()
-        for x, y in to_resolve:
+        defer = []
+        while to_resolve:
+            x, y = to_resolve.pop()
             adj_dynamite, adj_unknown = count_adjacent(x, y, size, info)
             hint = info[x][y]
             # If the # of dynamites + # of unknowns == the hint, mark all unknowns as dynamite
@@ -113,12 +119,22 @@ def dynamite():
 
             # If hint == # of dynamites, dig the rest
             elif hint == adj_dynamite:
-                dig_unknown_neighbors(x, y, size, info, new_to_resolve)
+                if dig_unknown_neighbors(x, y, size, info, to_resolve):
+                    return
 
+            # Otherwise, not enough information, defer
             else:
-                new_to_resolve.add((x, y))
+                defer.append((x, y))
 
-        to_resolve = new_to_resolve
+        to_resolve = defer
+
+    # If we've gotten here, we haven't finished. Just go to an
+    # unmarked spot and dig it :shrug:
+    for x in range(size):
+        for y in range(size):
+            if info[x][y] == None:
+                move_to(x, y)
+                dig()
 
 
 if __name__ == "__main__":
