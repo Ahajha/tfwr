@@ -107,7 +107,7 @@ def restore_corner_layer(
 	visit_spiral(diag_distance, diag_distance, xd, yd, restore_action)
 
 
-def pyramid():
+def uncover_pyramid():
 	sand_spot: tuple[int, int] | None = None
 	while sand_spot == None:
 		drones = []
@@ -126,6 +126,8 @@ def pyramid():
 
 	move_to(sand_spot[0], sand_spot[1])
 
+
+def pyramid():
 	while get_ground_type() != Grounds.Limestone:
 		dig()
 
@@ -296,4 +298,5 @@ def pyramid():
 if __name__ == "__main__":
 	move_to(16, 16)
 	jump(Unlocks.Pyramid)
+	uncover_pyramid()
 	pyramid()
