@@ -23,8 +23,9 @@ def mine_for_activities():
 		elif ground in (Grounds.Sand, Grounds.Limestone):
 			pyramid()
 			move_to(get_world_size() // 2, get_world_size() // 2)
-			# Need to make sure we get rid of the limestone
-			dig()
+			# Need to make sure we get rid of the limestone and any residual sand
+			while get_ground_type() in (Grounds.Limestone, Grounds.Sand):
+				dig()
 		else:
 			dig()
 
