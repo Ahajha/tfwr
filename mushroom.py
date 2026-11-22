@@ -225,7 +225,6 @@ def mushroom(start_x, start_y, size):
 
 	while True:
 		has_done_work = False
-		quick_print("starting the loop")
 		min_layer = None
 		has_mtypes = {0: False, 1: False, 2: False, 3: False, 4: False, 5: False}
 		for i in range(size):
@@ -298,7 +297,6 @@ def mushroom(start_x, start_y, size):
 
 				# Only the first and last spots need to update their info
 				assert_(push(steps[-1]))
-				quick_print(info[get_pos_x() - start_x][get_pos_y() - start_y])
 				info[get_pos_x() - start_x][get_pos_y() - start_y] = (
 					measure_mushroom(),
 					get_pos_z(),
@@ -317,7 +315,6 @@ def mushroom(start_x, start_y, size):
 					assert_(move(dir))
 
 				if get_ground_type() != Grounds.Mushroom:
-					quick_print(get_pos_z())
 					place(Grounds.Dirt)
 					info[get_pos_x() - start_x][get_pos_y() - start_y] = (
 						None,
