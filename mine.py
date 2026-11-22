@@ -30,5 +30,4 @@ def mine_for_activities():
 
 
 if __name__ == "__main__":
-	clear()
 	mine_for_activities()
