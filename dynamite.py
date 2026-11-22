@@ -189,19 +189,16 @@ def find_any_unknown(info, size) -> tuple[int, int]:
 
 def dynamite():
 	size = get_world_size()
-	if get_ground_type() != Grounds.Dynamite:
-		drones = []
-		for x in range(0, get_world_size(), 4):
-			for y in range(0, get_world_size(), 8):
-				if x == 0 and y == 0:
-					continue
-				drones.append(spawn_drone(dig_to_dynamite, x, y, 4, 8))
-		dig_to_dynamite(0, 0, 4, 8)
-		move_to(size / 2, size / 2)
-		for drone in drones:
-			wait_for(drone)
-	else:
-		move_to(size / 2, size / 2)
+	drones = []
+	for x in range(0, get_world_size(), 4):
+		for y in range(0, get_world_size(), 8):
+			if x == 0 and y == 0:
+				continue
+			drones.append(spawn_drone(dig_to_dynamite, x, y, 4, 8))
+	dig_to_dynamite(0, 0, 4, 8)
+	move_to(size / 2, size / 2)
+	for drone in drones:
+		wait_for(drone)
 
 	dig()
 

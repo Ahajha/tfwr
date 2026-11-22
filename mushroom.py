@@ -219,7 +219,7 @@ def lower_mushroom(
 				return
 
 
-def mushroom(start_x, start_y, size):
+def mushroom_single(start_x, start_y, size):
 	info = setup_mushroom(start_x, start_y, size)
 	semirandom_mushroom(info, start_x, start_y, size, 5)
 
@@ -332,12 +332,16 @@ def mushroom(start_x, start_y, size):
 			break
 
 
-if __name__ == "__main__":
-	clear()
-	jump(Unlocks.Mushrooms)
+def mushroom():
 	for x in range(0, get_world_size(), 8):
 		for y in range(0, get_world_size(), 8):
 			if x == 0 and y == 0:
 				continue
-			spawn_drone(mushroom, x, y, 8)
-	mushroom(0, 0, 8)
+			spawn_drone(mushroom_single, x, y, 8)
+	mushroom_single(0, 0, 8)
+
+
+if __name__ == "__main__":
+	clear()
+	jump(Unlocks.Mushrooms)
+	mushroom()
