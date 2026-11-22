@@ -1,4 +1,4 @@
-from utils import move_to, opposite, visit_rectangle
+from utils import move_to, opposite, visit_rectangle, visit_spiral
 
 
 def determine_bound(dir, limestone_layer) -> tuple[int, int]:
@@ -84,22 +84,6 @@ def restore_corner_layer(
 
 	diag_distance = corner_length + 1 - layer
 
-	corners = (
-		(center[0] + x_dir, center[1] + y_dir),
-		(center[0] + x_dir * diag_distance, center[1] + y_dir * diag_distance),
-	)
-
-	# visit_rectangle expects to start in the lower-left corner
-	start_x = min(corners[0][0], corners[1][0])
-	start_y = min(corners[0][1], corners[1][1])
-
-	x_distance = diag_distance
-	y_distance = diag_distance
-	if y_distance % 2 == 1:
-		if y_dir > 0:
-			start_y -= 1
-		y_distance += 1
-
 	def restore_action():
 		while get_ground_type() not in (Grounds.Sand, Grounds.Limestone):
 			dig()
@@ -109,9 +93,18 @@ def restore_corner_layer(
 		)
 		fill_sand(height)
 
-	move_to(start_x, start_y)
+	move_to(center[0] + x_dir, center[1] + y_dir)
 
-	visit_rectangle(x_distance, y_distance, restore_action)
+	if x_dir == 1:
+		xd = East
+	else:
+		xd = West
+	if y_dir == 1:
+		yd = North
+	else:
+		yd = South
+
+	visit_spiral(diag_distance, diag_distance, xd, yd, restore_action)
 
 
 def pyramid():
@@ -152,6 +145,8 @@ def pyramid():
 	w_bound = wait_for(drones[3])[0]
 
 	center = ((e_bound + w_bound) // 2, (n_bound + s_bound) // 2)
+
+	move_to(center[0], center[1])
 
 	quick_print(center)
 
@@ -299,8 +294,6 @@ def pyramid():
 
 
 if __name__ == "__main__":
-	clear()
-
 	move_to(16, 16)
 	jump(Unlocks.Pyramid)
 	pyramid()

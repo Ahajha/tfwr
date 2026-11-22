@@ -76,3 +76,33 @@ def visit_rectangle(size_x, size_y, action):
 
 def visit_square(size, action):
 	visit_rectangle(size, size, action)
+
+
+def visit_spiral(x_size, y_size, x_dir, y_dir, action):
+	# First is special
+	for _ in range(x_size - 1):
+		action()
+		move(x_dir)
+	x_dir_opp = opposite(x_dir)
+	y_dir_opp = opposite(y_dir)
+	is_x_opposite = True
+	for i in range(1, min(x_size, y_size) + 2):
+		if is_x_opposite:
+			xd = x_dir_opp
+			yd = y_dir
+		else:
+			xd = x_dir
+			yd = y_dir_opp
+		if y_size == i:
+			break
+		for _ in range(y_size - i):
+			action()
+			move(yd)
+		if x_size == i:
+			break
+		for _ in range(x_size - i):
+			action()
+			move(xd)
+		is_x_opposite = not is_x_opposite
+
+	action()
