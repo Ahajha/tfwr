@@ -1,4 +1,4 @@
-from utils import move_to, visit_square
+from utils import move_to
 
 
 def plant_rice():
@@ -15,35 +15,28 @@ def harvest_rice():
 
 def rice(x, y, size):
 	move_to(x, y)
-	visit_square(size, plant_rice)
-	visit_square(size, harvest_rice)
-	visit_square(size, plant_rice)
-	visit_square(size, harvest_rice)
+	for _ in range(size):
+		plant_rice()
+		use_item(Items.Water)
+		move(North)
+	for _ in range(size):
+		harvest_rice()
+		move(North)
+	for _ in range(size):
+		plant_rice()
+		move(North)
+	for _ in range(size):
+		harvest_rice()
+		move(North)
 
 
 def multirice():
-	SITES = [
-		(0, 8, 8),
-		(0, 16, 8),
-		(0, 24, 8),
-		(8, 0, 8),
-		(8, 8, 8),
-		(8, 16, 8),
-		(8, 24, 8),
-		(16, 0, 8),
-		(16, 8, 8),
-		(16, 16, 8),
-		(16, 24, 8),
-		(24, 0, 8),
-		(24, 8, 8),
-		(24, 16, 8),
-		(24, 24, 8),
-	]
+	size = get_world_size()
 	while True:
 		drones = []
-		for x, y, size in SITES:
-			drones.append(spawn_drone(rice, x, y, size))
-		rice(0, 0, 8)
+		for i in range(size - 1):
+			drones.append(spawn_drone(rice, i + 1, 0, size))
+		rice(0, 0, size)
 		for drone in drones:
 			wait_for(drone)
 		clear()
